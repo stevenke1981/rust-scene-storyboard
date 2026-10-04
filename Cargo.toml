@@ -1,0 +1,60 @@
+[package]
+name = "rust-scene-storyboard"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "Video scene storyboard editor: posable line-art characters, props, scene/camera settings and movement paths; exports draft PNGs plus Markdown/HTML narration (egui/eframe)"
+license = "MIT"
+authors = ["Ke Sheng Da"]
+readme = "README.md"
+repository = "https://github.com/stevenke1981/rust-scene-storyboard"
+keywords = ["storyboard", "pose", "line-art", "video", "egui"]
+categories = ["graphics", "gui", "multimedia::video"]
+
+[lib]
+name = "rss"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rust-scene-storyboard"
+path = "src/main.rs"
+
+[dependencies]
+# glow (OpenGL) renderer only; no default fonts (we embed a CJK font + the egui icon font).
+eframe = { version = "0.36.2", default-features = false, features = ["glow", "wayland", "x11"] }
+egui = { version = "0.36.2", default-features = false }
+epaint_default_fonts = "0.36.2"
+brotli-decompressor = { version = "5", default-features = false, features = ["std"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+# Native file dialogs (GTK3 backend on Linux, native APIs on Windows/macOS).
+rfd = { version = "0.17.2", default-features = false, features = ["gtk3"] }
+# Offscreen software rasteriser used for PNG export (GPU independent).
+tiny-skia = { version = "0.11.4", default-features = false, features = ["std", "simd"] }
+image = { version = "0.25.10", default-features = false, features = ["png"] }
+ab_glyph = { version = "0.2.32", default-features = false, features = ["std"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0"
+
+# Size-optimised release build (same profile as rust-pose-studio / whitebox-video-storyboard).
+[profile.release]
+opt-level = "s"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# Hot pixel / line-art / decompression code keeps full speed.
+[profile.release.package.tiny-skia]
+opt-level = 3
+[profile.release.package.brotli-decompressor]
+opt-level = 3
+[profile.release.package.png]
+opt-level = 3
+[profile.release.package.fdeflate]
+opt-level = 3
+[profile.release.package.miniz_oxide]
+opt-level = 3
+
+# Keep debug builds usable: the mannequin line-art renderer runs per frame.
+[profile.dev.package."*"]
+opt-level = 2

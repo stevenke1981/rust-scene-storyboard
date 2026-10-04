@@ -1,0 +1,1192 @@
+{
+  "format": "rust-scene-storyboard/project",
+  "version": 1,
+  "title": "咖啡店的相遇（範例）",
+  "synopsis": "大學生小明每天下午都會到街角的「晨光咖啡」報到。今天，店員小美為他端上一杯特別的拿鐵，店長老陳在一旁默默看著。",
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "preset": "16:9"
+  },
+  "cast": [
+    {
+      "id": "char_1",
+      "name": "小明",
+      "description": "大學生，20 歲，背著後背包，個性急躁但善良。",
+      "color": "#E65A28",
+      "height": 1.76,
+      "body_type": "masculine",
+      "head_size": 1.0
+    },
+    {
+      "id": "char_2",
+      "name": "小美",
+      "description": "咖啡店店員，22 歲，綁馬尾、穿圍裙，笑容親切。",
+      "color": "#2878DC",
+      "height": 1.62,
+      "body_type": "slim",
+      "head_size": 1.0
+    },
+    {
+      "id": "char_3",
+      "name": "老陳",
+      "description": "咖啡店店長，50 多歲，話不多，總是在吧台後觀察客人。",
+      "color": "#28A05A",
+      "height": 1.72,
+      "body_type": "masculine",
+      "head_size": 1.05
+    }
+  ],
+  "shots": [
+    {
+      "id": "shot_1",
+      "name": "咖啡店門口",
+      "duration": 4.0,
+      "setting": {
+        "location": "街角「晨光咖啡」門口",
+        "in_out": "exterior",
+        "time_of_day": "afternoon",
+        "weather": "晴朗，陽光斜照",
+        "environment": "安靜的巷弄，人行道旁有行道樹與長椅，咖啡店掛著木製招牌。"
+      },
+      "camera": {
+        "size": "full",
+        "angle": "eye_level",
+        "movement": "pan_right",
+        "notes": "跟著小明的移動慢慢向右搖。"
+      },
+      "horizon": 0.4,
+      "floor_grid": true,
+      "actors": [
+        {
+          "id": "actor_1",
+          "cast": "char_1",
+          "x": 300.0,
+          "y": 1010.0,
+          "facing": 90.0,
+          "scale": 1.1028059,
+          "pose": {
+            "preset": "walk",
+            "edited": false,
+            "lift": 0.0,
+            "joints": {
+              "chest": [
+                2.86,
+                -0.0,
+                0.0
+              ],
+              "foot_l": [
+                5.39,
+                5.12,
+                -1.77
+              ],
+              "foot_r": [
+                -8.02,
+                -4.11,
+                2.94
+              ],
+              "forearm_l": [
+                -11.96,
+                0.0,
+                0.0
+              ],
+              "forearm_r": [
+                -27.63,
+                0.0,
+                0.0
+              ],
+              "hand_l": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "hand_r": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "head": [
+                -1.43,
+                -0.0,
+                0.0
+              ],
+              "neck": [
+                -1.43,
+                -0.0,
+                0.0
+              ],
+              "pelvis": [
+                0.0,
+                -0.0,
+                0.0
+              ],
+              "shin_l": [
+                6.08,
+                0.0,
+                0.0
+              ],
+              "shin_r": [
+                26.86,
+                0.0,
+                0.0
+              ],
+              "thigh_l": [
+                -22.77,
+                0.0,
+                2.29
+              ],
+              "thigh_r": [
+                14.03,
+                1.24,
+                -1.98
+              ],
+              "upper_arm_l": [
+                14.8,
+                -4.84,
+                6.58
+              ],
+              "upper_arm_r": [
+                -22.0,
+                0.1,
+                -7.01
+              ],
+              "waist": [
+                0.0,
+                -0.0,
+                0.0
+              ]
+            }
+          },
+          "action": "背著後背包，快步從畫面左側走向咖啡店大門",
+          "expression": "期待、心情很好",
+          "dialogue": "",
+          "movement": {
+            "enabled": true,
+            "path": [
+              [
+                760.0,
+                870.0
+              ],
+              [
+                1100.0,
+                672.0
+              ]
+            ],
+            "style": "walk",
+            "start": 0.0,
+            "end": 3.2,
+            "end_pose": "push",
+            "end_facing": 160.0,
+            "ghost": true,
+            "depth_scale": true,
+            "description": "沿著人行道斜斜走向門口，最後伸手推門"
+          }
+        },
+        {
+          "id": "actor_2",
+          "cast": "char_2",
+          "x": 1420.0,
+          "y": 730.0,
+          "facing": -60.0,
+          "scale": 0.56857467,
+          "pose": {
+            "preset": "wave",
+            "edited": false,
+            "lift": 0.0,
+            "joints": {
+              "chest": [
+                1.15,
+                -0.0,
+                0.0
+              ],
+              "foot_l": [
+                -1.73,
+                8.44,
+                -3.12
+              ],
+              "foot_r": [
+                -1.73,
+                -8.44,
+                3.12
+              ],
+              "forearm_l": [
+                -8.4,
+                0.0,
+                0.0
+              ],
+              "forearm_r": [
+                -77.8,
+                0.0,
+                0.0
+              ],
+              "hand_l": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "hand_r": [
+                -3.28,
+                12.08,
+                -2.75
+              ],
+              "head": [
+                -0.57,
+                0.05,
+                2.29
+              ],
+              "neck": [
+                -0.57,
+                0.02,
+                2.29
+              ],
+              "pelvis": [
+                0.0,
+                -0.0,
+                0.0
+              ],
+              "shin_l": [
+                1.72,
+                0.0,
+                0.0
+              ],
+              "shin_r": [
+                1.72,
+                0.0,
+                0.0
+              ],
+              "thigh_l": [
+                0.0,
+                -0.0,
+                2.86
+              ],
+              "thigh_r": [
+                0.0,
+                -0.0,
+                -2.86
+              ],
+              "upper_arm_l": [
+                0.0,
+                -19.23,
+                9.65
+              ],
+              "upper_arm_r": [
+                -71.25,
+                -75.96,
+                -16.19
+              ],
+              "waist": [
+                0.0,
+                -0.0,
+                0.0
+              ]
+            }
+          },
+          "action": "站在店門旁，看到小明後舉手揮手打招呼",
+          "expression": "微笑",
+          "dialogue": "嗨！今天也是老樣子嗎？",
+          "movement": {
+            "enabled": false,
+            "path": [],
+            "style": "walk",
+            "start": 0.0,
+            "end": 2.0,
+            "end_pose": "",
+            "end_facing": null,
+            "ghost": true,
+            "depth_scale": true,
+            "description": ""
+          }
+        }
+      ],
+      "props": [
+        {
+          "id": "building_1",
+          "kind": "building",
+          "label": "咖啡店",
+          "x": 1330.0,
+          "y": 640.0,
+          "w": 1400.0,
+          "h": 560.0,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "door_1",
+          "kind": "door",
+          "label": "咖啡店大門",
+          "x": 1120.0,
+          "y": 640.0,
+          "w": 138.32,
+          "h": 305.76,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "window_1",
+          "kind": "window",
+          "label": "",
+          "x": 1480.0,
+          "y": 640.0,
+          "w": 166.40001,
+          "h": 166.40001,
+          "flip": false,
+          "elevation": 124.799995,
+          "notes": ""
+        },
+        {
+          "id": "window_2",
+          "kind": "window",
+          "label": "",
+          "x": 1780.0,
+          "y": 640.0,
+          "w": 166.40001,
+          "h": 166.40001,
+          "flip": false,
+          "elevation": 124.799995,
+          "notes": ""
+        },
+        {
+          "id": "sign_1",
+          "kind": "sign",
+          "label": "晨光咖啡",
+          "x": 880.0,
+          "y": 700.0,
+          "w": 178.66667,
+          "h": 357.33334,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "tree_1",
+          "kind": "tree",
+          "label": "",
+          "x": 200.0,
+          "y": 690.0,
+          "w": 378.4,
+          "h": 722.39996,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "bench_1",
+          "kind": "bench",
+          "label": "",
+          "x": 500.0,
+          "y": 730.0,
+          "w": 317.86667,
+          "h": 168.86667,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "lamp_1",
+          "kind": "lamp",
+          "label": "",
+          "x": 700.0,
+          "y": 665.0,
+          "w": 77.66667,
+          "h": 403.86667,
+          "flip": true,
+          "elevation": 0.0,
+          "notes": ""
+        }
+      ],
+      "narration": "午後的街角，陽光灑在咖啡店的招牌上。小明一如往常，快步走向那扇熟悉的木門。",
+      "notes": "開場建立地點，讓觀眾看清楚門口與招牌。"
+    },
+    {
+      "id": "shot_2",
+      "name": "店內櫃台點餐",
+      "duration": 5.0,
+      "setting": {
+        "location": "晨光咖啡店內・吧台",
+        "in_out": "interior",
+        "time_of_day": "afternoon",
+        "weather": "室內暖色燈光",
+        "environment": "木質吧台、牆上的菜單螢幕與書櫃，空氣中有咖啡香。"
+      },
+      "camera": {
+        "size": "medium_wide",
+        "angle": "high",
+        "movement": "dolly_in",
+        "notes": "從高處慢慢推近吧台。"
+      },
+      "horizon": 0.36,
+      "floor_grid": true,
+      "actors": [
+        {
+          "id": "actor_1",
+          "cast": "char_2",
+          "x": 1260.0,
+          "y": 690.0,
+          "facing": -15.0,
+          "scale": 0.57468015,
+          "pose": {
+            "preset": "talk",
+            "edited": false,
+            "lift": 0.0,
+            "joints": {
+              "chest": [
+                1.15,
+                -0.0,
+                0.0
+              ],
+              "foot_l": [
+                -1.73,
+                8.44,
+                -3.12
+              ],
+              "foot_r": [
+                -1.73,
+                -8.44,
+                3.12
+              ],
+              "forearm_l": [
+                -65.85,
+                0.0,
+                0.0
+              ],
+              "forearm_r": [
+                -76.66,
+                0.0,
+                0.0
+              ],
+              "hand_l": [
+                -160.02,
+                60.71,
+                -155.21
+              ],
+              "hand_r": [
+                -162.42,
+                -82.27,
+                159.59
+              ],
+              "head": [
+                -0.68,
+                -4.29,
+                -1.33
+              ],
+              "neck": [
+                -0.57,
+                -4.28,
+                -1.39
+              ],
+              "pelvis": [
+                0.0,
+                -0.0,
+                0.0
+              ],
+              "shin_l": [
+                1.72,
+                0.0,
+                0.0
+              ],
+              "shin_r": [
+                1.72,
+                0.0,
+                0.0
+              ],
+              "thigh_l": [
+                0.0,
+                -0.0,
+                2.86
+              ],
+              "thigh_r": [
+                0.0,
+                -0.0,
+                -2.86
+              ],
+              "upper_arm_l": [
+                -6.85,
+                11.11,
+                10.01
+              ],
+              "upper_arm_r": [
+                -15.39,
+                -14.43,
+                -7.44
+              ],
+              "waist": [
+                0.0,
+                -0.0,
+                0.0
+              ]
+            }
+          },
+          "action": "站在吧台後方，一邊聽點餐一邊比手勢",
+          "expression": "",
+          "dialogue": "一杯拿鐵、少冰，對吧？",
+          "movement": {
+            "enabled": false,
+            "path": [],
+            "style": "walk",
+            "start": 0.0,
+            "end": 2.0,
+            "end_pose": "",
+            "end_facing": null,
+            "ghost": true,
+            "depth_scale": true,
+            "description": ""
+          }
+        },
+        {
+          "id": "actor_2",
+          "cast": "char_1",
+          "x": 300.0,
+          "y": 1010.0,
+          "facing": 70.0,
+          "scale": 1.18523,
+          "pose": {
+            "preset": "walk",
+            "edited": false,
+            "lift": 0.0,
+            "joints": {
+              "chest": [
+                2.86,
+                -0.0,
+                0.0
+              ],
+              "foot_l": [
+                5.39,
+                5.12,
+                -1.77
+              ],
+              "foot_r": [
+                -8.02,
+                -4.11,
+                2.94
+              ],
+              "forearm_l": [
+                -11.96,
+                0.0,
+                0.0
+              ],
+              "forearm_r": [
+                -27.63,
+                0.0,
+                0.0
+              ],
+              "hand_l": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "hand_r": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "head": [
+                -1.43,
+                -0.0,
+                0.0
+              ],
+              "neck": [
+                -1.43,
+                -0.0,
+                0.0
+              ],
+              "pelvis": [
+                0.0,
+                -0.0,
+                0.0
+              ],
+              "shin_l": [
+                6.08,
+                0.0,
+                0.0
+              ],
+              "shin_r": [
+                26.86,
+                0.0,
+                0.0
+              ],
+              "thigh_l": [
+                -22.77,
+                0.0,
+                2.29
+              ],
+              "thigh_r": [
+                14.03,
+                1.24,
+                -1.98
+              ],
+              "upper_arm_l": [
+                14.8,
+                -4.84,
+                6.58
+              ],
+              "upper_arm_r": [
+                -22.0,
+                0.1,
+                -7.01
+              ],
+              "waist": [
+                0.0,
+                -0.0,
+                0.0
+              ]
+            }
+          },
+          "action": "走到吧台前，伸手指向牆上的菜單",
+          "expression": "",
+          "dialogue": "對！再加一份肉桂。",
+          "movement": {
+            "enabled": true,
+            "path": [
+              [
+                520.0,
+                940.0
+              ],
+              [
+                760.0,
+                925.0
+              ]
+            ],
+            "style": "stroll",
+            "start": 0.0,
+            "end": 2.0,
+            "end_pose": "point",
+            "end_facing": 60.0,
+            "ghost": true,
+            "depth_scale": true,
+            "description": "慢慢走到吧台前，停下來指向菜單"
+          }
+        }
+      ],
+      "props": [
+        {
+          "id": "screen_1",
+          "kind": "screen",
+          "label": "菜單螢幕",
+          "x": 1500.0,
+          "y": 560.0,
+          "w": 320.0,
+          "h": 300.0,
+          "flip": false,
+          "elevation": 110.0,
+          "notes": ""
+        },
+        {
+          "id": "shelf_1",
+          "kind": "shelf",
+          "label": "",
+          "x": 330.0,
+          "y": 560.0,
+          "w": 114.13332,
+          "h": 216.85332,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "counter_1",
+          "kind": "counter",
+          "label": "吧台",
+          "x": 1220.0,
+          "y": 730.0,
+          "w": 820.0,
+          "h": 238.83998,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "cup_1",
+          "kind": "cup",
+          "label": "咖啡杯",
+          "x": 1000.0,
+          "y": 732.0,
+          "w": 54.591995,
+          "h": 63.690666,
+          "flip": false,
+          "elevation": 238.83998,
+          "notes": ""
+        },
+        {
+          "id": "plant_1",
+          "kind": "plant",
+          "label": "",
+          "x": 1800.0,
+          "y": 920.0,
+          "w": 177.06665,
+          "h": 318.71997,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        }
+      ],
+      "narration": "小明走到吧台前，指著牆上的菜單點了他的老樣子；小美一邊聽一邊比手勢確認。",
+      "notes": ""
+    },
+    {
+      "id": "shot_3",
+      "name": "靠窗的座位",
+      "duration": 6.0,
+      "setting": {
+        "location": "晨光咖啡店內・靠窗座位",
+        "in_out": "interior",
+        "time_of_day": "dusk",
+        "weather": "夕陽從窗外照進來",
+        "environment": "窗邊的小圓桌與兩張椅子，窗外是逐漸變暗的街道。"
+      },
+      "camera": {
+        "size": "medium_wide",
+        "angle": "eye_level",
+        "movement": "static",
+        "notes": ""
+      },
+      "horizon": 0.44,
+      "floor_grid": true,
+      "actors": [
+        {
+          "id": "actor_3",
+          "cast": "char_3",
+          "x": 1500.0,
+          "y": 600.0,
+          "facing": -40.0,
+          "scale": 0.23811448,
+          "pose": {
+            "preset": "arms_crossed",
+            "edited": false,
+            "lift": 0.0,
+            "joints": {
+              "chest": [
+                1.15,
+                -0.0,
+                0.0
+              ],
+              "foot_l": [
+                -1.73,
+                8.44,
+                -3.12
+              ],
+              "foot_r": [
+                -1.73,
+                -8.44,
+                3.12
+              ],
+              "forearm_l": [
+                -92.99,
+                0.0,
+                0.0
+              ],
+              "forearm_r": [
+                -89.74,
+                0.0,
+                0.0
+              ],
+              "hand_l": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "hand_r": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "head": [
+                -0.57,
+                -0.0,
+                0.0
+              ],
+              "neck": [
+                -0.57,
+                -0.0,
+                0.0
+              ],
+              "pelvis": [
+                0.0,
+                -0.0,
+                0.0
+              ],
+              "shin_l": [
+                1.72,
+                0.0,
+                0.0
+              ],
+              "shin_r": [
+                1.72,
+                0.0,
+                0.0
+              ],
+              "thigh_l": [
+                0.0,
+                -0.0,
+                2.86
+              ],
+              "thigh_r": [
+                0.0,
+                -0.0,
+                -2.86
+              ],
+              "upper_arm_l": [
+                -68.01,
+                -56.18,
+                44.98
+              ],
+              "upper_arm_r": [
+                -64.35,
+                58.25,
+                -43.8
+              ],
+              "waist": [
+                0.0,
+                -0.0,
+                0.0
+              ]
+            }
+          },
+          "action": "在吧台後雙手抱胸，看著兩人",
+          "expression": "嘴角微微上揚",
+          "dialogue": "",
+          "movement": {
+            "enabled": false,
+            "path": [],
+            "style": "walk",
+            "start": 0.0,
+            "end": 2.0,
+            "end_pose": "",
+            "end_facing": null,
+            "ghost": true,
+            "depth_scale": true,
+            "description": ""
+          }
+        },
+        {
+          "id": "actor_1",
+          "cast": "char_1",
+          "x": 610.0,
+          "y": 900.0,
+          "facing": 80.0,
+          "scale": 0.8105051,
+          "pose": {
+            "preset": "sit",
+            "edited": false,
+            "lift": 0.0,
+            "joints": {
+              "chest": [
+                1.72,
+                -0.0,
+                0.0
+              ],
+              "foot_l": [
+                -3.14,
+                -1.06,
+                -2.62
+              ],
+              "foot_r": [
+                -3.14,
+                1.06,
+                2.62
+              ],
+              "forearm_l": [
+                -2.22,
+                0.0,
+                0.0
+              ],
+              "forearm_r": [
+                -2.22,
+                0.0,
+                0.0
+              ],
+              "hand_l": [
+                -56.66,
+                -52.46,
+                70.21
+              ],
+              "hand_r": [
+                -56.66,
+                52.46,
+                -70.21
+              ],
+              "head": [
+                -0.86,
+                -0.0,
+                0.0
+              ],
+              "neck": [
+                -0.86,
+                -0.0,
+                0.0
+              ],
+              "pelvis": [
+                -2.86,
+                -0.0,
+                0.0
+              ],
+              "shin_l": [
+                88.6,
+                0.0,
+                0.0
+              ],
+              "shin_r": [
+                88.6,
+                0.0,
+                0.0
+              ],
+              "thigh_l": [
+                -82.27,
+                6.48,
+                3.02
+              ],
+              "thigh_r": [
+                -82.27,
+                -6.48,
+                -3.02
+              ],
+              "upper_arm_l": [
+                -34.68,
+                -20.24,
+                5.7
+              ],
+              "upper_arm_r": [
+                -34.68,
+                20.24,
+                -5.7
+              ],
+              "waist": [
+                2.86,
+                -0.0,
+                0.0
+              ]
+            }
+          },
+          "action": "坐在窗邊的椅子上，轉頭看向走過來的小美",
+          "expression": "驚喜",
+          "dialogue": "",
+          "movement": {
+            "enabled": false,
+            "path": [],
+            "style": "walk",
+            "start": 0.0,
+            "end": 2.0,
+            "end_pose": "",
+            "end_facing": null,
+            "ghost": true,
+            "depth_scale": true,
+            "description": ""
+          }
+        },
+        {
+          "id": "actor_2",
+          "cast": "char_2",
+          "x": 1720.0,
+          "y": 1000.0,
+          "facing": -90.0,
+          "scale": 1.001302,
+          "pose": {
+            "preset": "carry",
+            "edited": false,
+            "lift": 0.0,
+            "joints": {
+              "chest": [
+                1.15,
+                -0.0,
+                0.0
+              ],
+              "foot_l": [
+                -1.73,
+                8.44,
+                -3.12
+              ],
+              "foot_r": [
+                -1.73,
+                -8.44,
+                3.12
+              ],
+              "forearm_l": [
+                -73.13,
+                0.0,
+                0.0
+              ],
+              "forearm_r": [
+                -73.13,
+                0.0,
+                0.0
+              ],
+              "hand_l": [
+                5.19,
+                25.5,
+                11.11
+              ],
+              "hand_r": [
+                5.19,
+                -25.5,
+                -11.11
+              ],
+              "head": [
+                0.86,
+                -0.0,
+                0.0
+              ],
+              "neck": [
+                0.86,
+                -0.0,
+                0.0
+              ],
+              "pelvis": [
+                0.0,
+                -0.0,
+                0.0
+              ],
+              "shin_l": [
+                1.72,
+                0.0,
+                0.0
+              ],
+              "shin_r": [
+                1.72,
+                0.0,
+                0.0
+              ],
+              "thigh_l": [
+                0.0,
+                -0.0,
+                2.86
+              ],
+              "thigh_r": [
+                0.0,
+                -0.0,
+                -2.86
+              ],
+              "upper_arm_l": [
+                -27.95,
+                -18.4,
+                27.93
+              ],
+              "upper_arm_r": [
+                -27.95,
+                18.4,
+                -27.93
+              ],
+              "waist": [
+                0.0,
+                -0.0,
+                0.0
+              ]
+            }
+          },
+          "action": "雙手捧著拿鐵，從右側走向桌邊",
+          "expression": "",
+          "dialogue": "請慢用，今天的拉花是愛心喔。",
+          "movement": {
+            "enabled": true,
+            "path": [
+              [
+                1450.0,
+                960.0
+              ],
+              [
+                1290.0,
+                935.0
+              ]
+            ],
+            "style": "walk",
+            "start": 0.5,
+            "end": 3.5,
+            "end_pose": "carry",
+            "end_facing": null,
+            "ghost": true,
+            "depth_scale": true,
+            "description": "小心地端著咖啡走到桌邊"
+          }
+        }
+      ],
+      "props": [
+        {
+          "id": "window_1",
+          "kind": "window",
+          "label": "大窗戶",
+          "x": 900.0,
+          "y": 455.0,
+          "w": 600.0,
+          "h": 330.0,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "counter_1",
+          "kind": "counter",
+          "label": "吧台",
+          "x": 1650.0,
+          "y": 612.0,
+          "w": 620.0,
+          "h": 95.75999,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "chair_1",
+          "kind": "chair",
+          "label": "",
+          "x": 585.0,
+          "y": 885.0,
+          "w": 136.6,
+          "h": 259.54,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "chair_2",
+          "kind": "chair",
+          "label": "",
+          "x": 1270.0,
+          "y": 880.0,
+          "w": 134.93333,
+          "h": 256.37332,
+          "flip": true,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "table_1",
+          "kind": "table",
+          "label": "",
+          "x": 930.0,
+          "y": 905.0,
+          "w": 311.52002,
+          "h": 212.40001,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        },
+        {
+          "id": "cup_1",
+          "kind": "cup",
+          "label": "拿鐵",
+          "x": 890.0,
+          "y": 908.0,
+          "w": 67.968,
+          "h": 79.296005,
+          "flip": false,
+          "elevation": 212.4,
+          "notes": ""
+        },
+        {
+          "id": "plant_1",
+          "kind": "plant",
+          "label": "",
+          "x": 230.0,
+          "y": 950.0,
+          "w": 158.26666,
+          "h": 284.87997,
+          "flip": false,
+          "elevation": 0.0,
+          "notes": ""
+        }
+      ],
+      "narration": "黃昏時分，小美端著拿鐵走向坐在窗邊的小明。吧台後的老陳雙手抱胸，嘴角微微上揚。",
+      "notes": "結尾鏡頭，保留老陳在背景的反應。"
+    }
+  ]
+}
