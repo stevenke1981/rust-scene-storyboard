@@ -55,6 +55,12 @@ pub enum Drag {
         size0: [f32; 2],
         p0: [f32; 2],
     },
+    /// Move a character's dialogue balloon (changes `bubble.offset`).
+    Bubble {
+        id: String,
+        off0: [f32; 2],
+        p0: [f32; 2],
+    },
     /// Move one point of a movement path (index into `movement.path`).
     PathPoint {
         id: String,
@@ -985,6 +991,7 @@ impl App {
                     ("拖曳藍色圓點", "旋轉該關節（FK）"),
                     ("拖曳綠色菱形（手腕、腳踝）", "IK：整條手臂 / 腿跟著移動"),
                     ("拖曳走位路徑點", "調整移動路徑；最後一點是終點"),
+                    ("拖曳對白框", "移動對白框位置（尾巴自動指向說話者；右側面板可選樣式、直書）"),
                     ("Shift + 點擊空白處", "為選取角色加入走位路徑點"),
                     ("拖曳道具右上角方塊", "調整道具大小"),
                     ("右鍵 / 中鍵拖曳、滾輪", "平移、縮放畫布"),

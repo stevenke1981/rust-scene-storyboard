@@ -5,15 +5,16 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 
 /// Noto Sans CJK TC Regular, subset to ASCII/Latin-1, punctuation, symbols,
-/// Bopomofo, all Big5 and GB2312 characters (~16.8k glyphs), embedded
-/// Brotli-compressed (7.5 MB → 5.0 MB).
+/// Bopomofo, all Big5 and GB2312 characters plus CJK vertical forms (~16.9k
+/// glyphs, no layout/hinting tables), embedded Brotli-compressed (4.0 MB → 2.6 MB).
+/// Rebuild with `tools/subset_font.py`.
 static CJK_FONT_BR: &[u8] = include_bytes!("../assets/fonts/NotoSansCJKtc-Subset.otf.br");
 
 /// The bundled CJK font (decompressed once, ~0.1 s, on first use).
 pub fn cjk_font() -> &'static [u8] {
     static FONT: OnceLock<Vec<u8>> = OnceLock::new();
     FONT.get_or_init(|| {
-        let mut out = Vec::with_capacity(7_600_000);
+        let mut out = Vec::with_capacity(4_100_000);
         brotli_decompressor::BrotliDecompress(&mut &CJK_FONT_BR[..], &mut out).expect("bundled font is valid brotli");
         out
     })

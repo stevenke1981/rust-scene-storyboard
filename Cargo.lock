@@ -2077,7 +2077,7 @@ dependencies = [
 
 [[package]]
 name = "rust-scene-storyboard"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ab_glyph",
  "brotli-decompressor",
@@ -2086,6 +2086,7 @@ dependencies = [
  "egui",
  "epaint_default_fonts",
  "image",
+ "png",
  "rfd",
  "serde",
  "serde_json",

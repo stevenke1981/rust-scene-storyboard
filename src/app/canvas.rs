@@ -47,7 +47,7 @@ pub fn prop_bounds(project: &Project, shot: &Shot, p: &Prop) -> [f32; 4] {
     let mut add = |q: [f32; 2]| b = [b[0].min(q[0]), b[1].min(q[1]), b[2].max(q[0]), b[3].max(q[1])];
     for prim in prop_prims(p, shot.camera.angle.pitch(), u) {
         match prim {
-            P::Poly { pts, .. } => pts.iter().for_each(|q| add(*q)),
+            P::Poly { pts, .. } | P::Shape { pts, .. } => pts.iter().for_each(|q| add(*q)),
             P::Ellipse { c, r, .. } => {
                 add([c[0] - r[0], c[1] - r[1]]);
                 add([c[0] + r[0], c[1] + r[1]]);
@@ -65,6 +65,7 @@ enum Hit {
     Joint(Joint, f32, [f32; 2]),
     PathPoint(usize),
     PropResize,
+    Bubble(String),
     Actor(String),
     Prop(String),
 }
@@ -123,6 +124,16 @@ impl App {
             let b = prop_bounds(&self.project, shot, pr);
             if dist([b[2], b[1]], p) <= r * 1.2 {
                 return Some(Hit::PropResize);
+            }
+        }
+        // Dialogue balloons are drawn above everything else.
+        if self.export_opts.dialogue {
+            for a in shot.actors.iter().rev() {
+                if let Some(b) = rss::bubble::actor_bubble(&self.project, shot, a)
+                    && contains(b.rect, p, 0.0)
+                {
+                    return Some(Hit::Bubble(a.id.clone()));
+                }
             }
         }
         // Scene content, front (larger y) first.
@@ -222,6 +233,11 @@ impl App {
                     pr.h = (size0[1] - dy).max(8.0);
                 }
             }
+            Drag::Bubble { id, off0, p0 } => {
+                if let Some(a) = self.actor_mut(&id) {
+                    a.bubble.offset = [off0[0] + p[0] - p0[0], off0[1] + p[1] - p0[1]];
+                }
+            }
             Drag::PathPoint { id, idx } => {
                 if let Some(a) = self.actor_mut(&id)
                     && let Some(q) = a.movement.path.get_mut(idx)
@@ -284,6 +300,13 @@ impl App {
                     self.sel = Sel::Actor(id.clone());
                     self.actor_drag(&id, sp)
                 }
+                Some(Hit::Bubble(id)) => {
+                    if self.sel != Sel::Actor(id.clone()) {
+                        self.sel_joint = None;
+                    }
+                    self.sel = Sel::Actor(id.clone());
+                    self.cur().actor(&id).map(|a| Drag::Bubble { id: id.clone(), off0: a.bubble.offset, p0: sp })
+                }
                 Some(Hit::Prop(id)) => {
                     self.sel = Sel::Prop(id.clone());
                     self.cur().props.iter().find(|x| x.id == id).map(|pr| Drag::Prop {
@@ -329,7 +352,7 @@ impl App {
                     self.set_status(true, "已加入走位路徑點（最後一點為終點）");
                 }
                 (Some(Hit::Joint(j, ..)), _, _) => self.sel_joint = Some(j),
-                (Some(Hit::Actor(id)), _, _) => {
+                (Some(Hit::Actor(id)) | Some(Hit::Bubble(id)), _, _) => {
                     if self.sel != Sel::Actor(id.clone()) {
                         self.sel_joint = None;
                     }
@@ -413,6 +436,7 @@ impl App {
             (Some(Hit::Joint(j, ..)), _) => format!("關節：{}", joint_zh(*j)),
             (Some(Hit::PathPoint(i)), _) => format!("走位點 {}（拖曳移動，雙擊刪除）", i + 1),
             (Some(Hit::PropResize), _) => "拖曳調整道具大小".into(),
+            (Some(Hit::Bubble(_)), _) => "拖曳移動對白框（尾巴會自動指向說話者）".into(),
             (_, Sel::Actor(_)) => "拖曳關節調整姿勢 · Shift+點擊空白處加入走位點 · Delete 刪除".into(),
             (_, Sel::Prop(_)) => "拖曳移動道具 · 右上角方塊調整大小".into(),
             _ => "點選角色或道具；右鍵拖曳平移、滾輪縮放".into(),
@@ -430,6 +454,7 @@ impl App {
         } else {
             match hovered {
                 Some(Hit::PropResize) => ctx.set_cursor_icon(CursorIcon::ResizeNeSw),
+                Some(Hit::Bubble(_)) => ctx.set_cursor_icon(CursorIcon::Move),
                 Some(_) => ctx.set_cursor_icon(CursorIcon::PointingHand),
                 None => {}
             }
@@ -455,6 +480,13 @@ impl App {
                 let spec = FigureSpec::of_actor(&self.project, shot, a);
                 let r = view.rect(spec.bounds());
                 painter.rect_stroke(r, 3.0, Stroke::new(1.2, ACCENT.gamma_multiply(0.8)), StrokeKind::Outside);
+                if self.export_opts.dialogue
+                    && let Some(b) = rss::bubble::actor_bubble(&self.project, shot, a)
+                {
+                    let br = view.rect(b.rect).expand(3.0);
+                    let pts = vec![br.left_top(), br.right_top(), br.right_bottom(), br.left_bottom(), br.left_top()];
+                    painter.extend(egui::Shape::dashed_line(&pts, Stroke::new(1.3, ACCENT), 6.0, 4.0));
+                }
                 // movement path handles
                 if a.movement.enabled {
                     for (i, q) in a.movement.path.iter().enumerate() {

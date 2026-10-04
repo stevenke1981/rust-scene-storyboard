@@ -144,6 +144,10 @@ pub struct ActorDesc {
     pub action: String,
     pub expression: String,
     pub dialogue: String,
+    /// Balloon style of the dialogue.
+    pub bubble: crate::model::BubbleStyle,
+    /// e.g. "對話泡泡（圓角橢圓＋尖尾）・直書"
+    pub bubble_desc: String,
     pub movement: Option<MoveDesc>,
 }
 
@@ -174,6 +178,8 @@ pub struct ShotDesc {
     pub camera_notes: String,
     pub narrative: String,
     pub narration: String,
+    /// The narration is also drawn as a caption box in the draft.
+    pub narration_box: bool,
     pub notes: String,
     pub actors: Vec<ActorDesc>,
     pub relations: Vec<String>,
@@ -337,6 +343,8 @@ pub fn describe_shot(p: &Project, i: usize) -> ShotDesc {
             action: a.action.trim().to_string(),
             expression: a.expression.trim().to_string(),
             dialogue: a.dialogue.trim().to_string(),
+            bubble: a.bubble.style,
+            bubble_desc: format!("{}{}", a.bubble.style.shape_zh(), if a.bubble.vertical { "・直書" } else { "" }),
             movement,
         });
     }
@@ -386,6 +394,7 @@ pub fn describe_shot(p: &Project, i: usize) -> ShotDesc {
         camera_notes: shot.camera.notes.trim().to_string(),
         narrative: String::new(),
         narration: shot.narration.trim().to_string(),
+        narration_box: shot.narration_box,
         notes: shot.notes.trim().to_string(),
         actors,
         relations: relations(p, shot),
@@ -460,7 +469,7 @@ pub fn narrative(p: &Project, shot: &Shot, d: &ShotDesc) -> String {
             t.push('。');
         }
         if !ad.dialogue.is_empty() {
-            t.push_str(&format!("{}說：{}", ad.name, quote(&ad.dialogue)));
+            t.push_str(&format!("{}{}：{}", ad.name, ad.bubble.verb_zh(), quote(&ad.dialogue)));
         }
         s.push_str(&t);
     }
@@ -649,7 +658,8 @@ pub fn storyboard_md(p: &Project, with_images: bool) -> String {
         }
         s.push_str(&format!("\n### 畫面敘述\n\n> {}\n\n", d.narrative));
         if !d.narration.is_empty() {
-            s.push_str(&format!("### 旁白\n\n> {}\n\n", d.narration.replace('\n', "\n> ")));
+            let boxed = if d.narration_box { "（草稿圖以旁白框顯示）" } else { "" };
+            s.push_str(&format!("### 旁白{boxed}\n\n> {}\n\n", d.narration.replace('\n', "\n> ")));
         }
         if !d.actors.is_empty() {
             s.push_str("### 人物與走位\n\n");
@@ -666,7 +676,7 @@ pub fn storyboard_md(p: &Project, with_images: bool) -> String {
                     s.push_str(&format!("- **表情**：{}\n", a.expression));
                 }
                 if !a.dialogue.is_empty() {
-                    s.push_str(&format!("- **對白**：{}\n", quote(&a.dialogue)));
+                    s.push_str(&format!("- **對白**（{}）：{}\n", a.bubble_desc, quote(&a.dialogue)));
                 }
                 if let Some(m) = &a.movement {
                     s.push_str(&format!("- **移動 {}**：{}\n", circled(m.number), m.text));
@@ -728,7 +738,12 @@ pub fn storyboard_md(p: &Project, with_images: bool) -> String {
                 ));
             }
             if !a.dialogue.trim().is_empty() {
-                ev.push((t0, format!("{name}：{}", quote(&a.dialogue))));
+                let style = if a.bubble.style == crate::model::BubbleStyle::Speech {
+                    String::new()
+                } else {
+                    format!("（{}）", a.bubble.style.zh())
+                };
+                ev.push((t0, format!("{name}{style}：{}", quote(&a.dialogue))));
             }
         }
         ev.sort_by(|a, b| a.0.total_cmp(&b.0));

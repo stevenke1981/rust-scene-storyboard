@@ -8,7 +8,6 @@
 
 use crate::figure::{FigureSpec, end_scale_factor};
 use crate::model::{Actor, InOut, Project, Prop, PropKind, Shot, TimeOfDay};
-use crate::raster::Fonts;
 
 pub type Rgba = [u8; 4];
 
@@ -42,6 +41,15 @@ pub enum P {
         r: [f32; 2],
         fill: Option<Rgba>,
         stroke: Option<Stroke2>,
+    },
+    /// Closed, possibly concave polygon that is star-shaped around `center`
+    /// (comic balloons with tails, clouds and bursts; the GUI fills it as a fan).
+    Shape {
+        pts: Vec<[f32; 2]>,
+        center: [f32; 2],
+        fill: Option<Rgba>,
+        stroke: Option<Stroke2>,
+        dash: bool,
     },
     /// Single-line text; `anchor` is the fraction of the text box placed at `pos`
     /// (`[0, 0]` = top-left, `[0.5, 1]` = bottom-centre). `bg` draws a rounded badge.
@@ -617,47 +625,6 @@ fn background(p: &Project, shot: &Shot, u: f32) -> Vec<P> {
     o
 }
 
-/// Speech bubble with wrapped text above `tip` (top of a head).
-fn bubble(out: &mut Vec<P>, tip: [f32; 2], s: &str, color: Rgba, u: f32, canvas_w: f32) {
-    let fonts = Fonts::get();
-    let size = 26.0 * u;
-    let max_w = 420.0 * u;
-    let lines = fonts.wrap(s, size, max_w);
-    let tw = lines.iter().map(|l| fonts.measure(l, size)).fold(0.0, f32::max);
-    let lh = size * 1.3;
-    let pad = 14.0 * u;
-    let bw = tw + pad * 2.0;
-    let bh = lh * lines.len() as f32 + pad * 1.4;
-    let bx = (tip[0] + 30.0 * u).clamp(4.0, (canvas_w - bw - 4.0).max(4.0));
-    let by = (tip[1] - bh - 46.0 * u).max(4.0);
-    let st = Some(Stroke2 { width: 2.0 * u, color });
-    let base_x = (tip[0] + 12.0 * u).clamp(bx + 16.0 * u, bx + bw - 16.0 * u);
-    out.push(poly(
-        vec![
-            [base_x - 12.0 * u, by + bh - 2.0],
-            [base_x + 14.0 * u, by + bh - 2.0],
-            [tip[0] + 4.0 * u, tip[1] - 12.0 * u],
-        ],
-        Some(PAPER),
-        st,
-    ));
-    out.push(poly(rounded_rect(bx, by, bw, bh, 18.0 * u), Some(PAPER), st));
-    // cover the tail's base line
-    out.push(line(
-        vec![[base_x - 10.0 * u, by + bh - 1.0 * u], [base_x + 12.0 * u, by + bh - 1.0 * u]],
-        Stroke2 { width: 3.0 * u, color: PAPER },
-    ));
-    for (i, l) in lines.iter().enumerate() {
-        out.push(text(
-            [bx + pad, by + pad * 0.7 + lh * i as f32 + (lh - size) / 2.0],
-            l.clone(),
-            size,
-            INK,
-            [0.0, 0.0],
-        ));
-    }
-}
-
 fn arrow_head(tip: [f32; 2], from: [f32; 2], size: f32, color: Rgba) -> P {
     let (dx, dy) = (tip[0] - from[0], tip[1] - from[1]);
     let l = (dx * dx + dy * dy).sqrt().max(1e-3);
@@ -787,12 +754,15 @@ pub fn shot_items(p: &Project, shot: &Shot, opts: &DraftOptions) -> Vec<Item> {
             over.push(text([pr.x, pr.y - pr.elevation + 6.0 * u], pr.display_name(), 18.0 * u, LABEL_GRAY, [0.5, 0.0]));
         }
     }
+    let mut balloons: Vec<P> = Vec::new();
     for a in &shot.actors {
         let f = FigureSpec::of_actor(p, shot, a);
         let top = f.head_top();
         let cast = p.cast_of(a);
-        if opts.dialogue && !a.dialogue.trim().is_empty() {
-            bubble(&mut over, top, a.dialogue.trim(), cast.color.rgba(255), u, cw);
+        if opts.dialogue
+            && let Some(b) = crate::bubble::actor_bubble(p, shot, a)
+        {
+            balloons.extend(b.prims);
         }
         if opts.labels {
             over.push(P::Text {
@@ -804,6 +774,13 @@ pub fn shot_items(p: &Project, shot: &Shot, opts: &DraftOptions) -> Vec<Item> {
                 bg: Some(cast.color.rgba(255)),
             });
         }
+    }
+    // Balloons go above figures and name badges (like comic lettering).
+    over.extend(balloons);
+    if opts.dialogue && shot.narration_box && !shot.narration.trim().is_empty() {
+        let pos = [16.0 * u, if opts.header { 64.0 * u } else { 16.0 * u }];
+        let (prims, _) = crate::bubble::caption(shot.narration.trim(), pos, (cw * 0.36).max(320.0 * u), u);
+        over.extend(prims);
     }
     if opts.header {
         let idx = p.shots.iter().position(|s| s.id == shot.id).unwrap_or(0) + 1;

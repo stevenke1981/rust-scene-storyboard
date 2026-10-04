@@ -1,6 +1,6 @@
 [package]
 name = "rust-scene-storyboard"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.95"
 description = "Video scene storyboard editor: posable line-art characters, props, scene/camera settings and movement paths; exports draft PNGs plus Markdown/HTML narration (egui/eframe)"
@@ -30,31 +30,40 @@ chrono = { version = "0.4", default-features = false, features = ["clock"] }
 rfd = { version = "0.17.2", default-features = false, features = ["gtk3"] }
 # Offscreen software rasteriser used for PNG export (GPU independent).
 tiny-skia = { version = "0.11.4", default-features = false, features = ["std", "simd"] }
-image = { version = "0.25.10", default-features = false, features = ["png"] }
+png = "0.18.1"
 ab_glyph = { version = "0.2.32", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0"
 
-# Size-optimised release build (same profile as rust-pose-studio / whitebox-video-storyboard).
+# Release build: tuned for speed first, size second. Measured on the sample project
+# (Linux x86_64), opt-level 3 + fat LTO exports ~1.5x faster than opt-level "s" for
+# +1.3 MB, while thin LTO is the same speed but 0.9 MB larger. See README「效能與檔案大小」.
 [profile.release]
-opt-level = "s"
+opt-level = 3
 lto = "fat"
 codegen-units = 1
 panic = "abort"
 strip = true
 
-# Hot pixel / line-art / decompression code keeps full speed.
-[profile.release.package.tiny-skia]
+# Smallest binary (`cargo build --profile release-small`): optimise for size, but keep
+# the hot pixel / font / decompression / PNG code at full speed.
+[profile.release-small]
+inherits = "release"
+opt-level = "s"
+[profile.release-small.package.tiny-skia]
 opt-level = 3
-[profile.release.package.brotli-decompressor]
+[profile.release-small.package.brotli-decompressor]
 opt-level = 3
-[profile.release.package.png]
+[profile.release-small.package.png]
 opt-level = 3
-[profile.release.package.fdeflate]
+[profile.release-small.package.fdeflate]
 opt-level = 3
-[profile.release.package.miniz_oxide]
+[profile.release-small.package.miniz_oxide]
 opt-level = 3
 
 # Keep debug builds usable: the mannequin line-art renderer runs per frame.
 [profile.dev.package."*"]
 opt-level = 2
+
+[dev-dependencies]
+image = { version = "0.25.10", default-features = false, features = ["png"] }

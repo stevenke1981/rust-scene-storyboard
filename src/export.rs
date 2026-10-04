@@ -251,10 +251,23 @@ pub fn export_all(p: &Project, dir: &Path, opts: &ExportOptions) -> Result<Expor
     let mut pixmaps = vec![];
     let mut pngs = vec![];
     if need_images {
-        for i in 0..p.shots.len() {
-            let pm = render_shot(p, i, opts)?;
-            pngs.push(raster::encode_png(&pm)?);
+        // Shots are independent: rasterise + encode them on all cores.
+        let rendered: Vec<Result<(Pixmap, Vec<u8>), String>> = std::thread::scope(|sc| {
+            let jobs: Vec<_> = (0..p.shots.len())
+                .map(|i| {
+                    sc.spawn(move || {
+                        let pm = render_shot(p, i, opts)?;
+                        let png = raster::encode_png(&pm)?;
+                        Ok((pm, png))
+                    })
+                })
+                .collect();
+            jobs.into_iter().map(|j| j.join().unwrap_or_else(|_| Err("算圖執行緒失敗".into()))).collect()
+        });
+        for r in rendered {
+            let (pm, png) = r?;
             pixmaps.push(pm);
+            pngs.push(png);
         }
     }
     if f.png {
@@ -293,6 +306,41 @@ pub fn export_to(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn balloons_are_rendered_into_the_png() {
+        let p = crate::sample::sample_project();
+        let on = ExportOptions::default();
+        let off = ExportOptions { dialogue: false, ..ExportOptions::default() };
+        for (i, shot) in p.shots.iter().enumerate() {
+            let shapes = |o: &ExportOptions| {
+                shot_items(&p, shot, &o.draft())
+                    .iter()
+                    .filter(|it| matches!(it, crate::draw::Item::Prim(P::Shape { .. })))
+                    .count()
+            };
+            assert!(shapes(&on) >= 1, "shot {i} has a balloon");
+            assert_eq!(shapes(&off), 0);
+            // Pixels inside each balloon's body differ when dialogue is on.
+            let (a, b) = (render_shot(&p, i, &on).unwrap(), render_shot(&p, i, &off).unwrap());
+            for actor in shot.actors.iter().filter(|a| !a.dialogue.trim().is_empty()) {
+                let l = crate::bubble::actor_bubble(&p, shot, actor).unwrap();
+                let [x0, y0, x1, y1] = l.rect.map(|v| v as u32);
+                let (mut diff, mut light, mut n) = (0, 0, 0);
+                for y in (y0..y1.min(a.height())).step_by(2) {
+                    for x in (x0..x1.min(a.width())).step_by(2) {
+                        let px = a.pixel(x, y).unwrap();
+                        diff += usize::from(Some(px) != b.pixel(x, y));
+                        light += usize::from(px.red() > 200 && px.green() > 200);
+                        n += 1;
+                    }
+                }
+                assert!(diff > 50, "shot {i} {}: {diff}", actor.id);
+                // The balloon body is mostly light paper (text and outline are thin).
+                assert!(light * 2 > n, "shot {i} {}: {light}/{n}", actor.id);
+            }
+        }
+    }
 
     #[test]
     fn export_sample_writes_everything() {

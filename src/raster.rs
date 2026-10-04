@@ -12,40 +12,60 @@ use crate::draw::{Item, P, Rgba, Stroke2};
 use crate::figure::FigureDraw;
 use crate::mannequin::render::{DrawList, Frame2, Mask, Prim};
 
-/// Font chain: bundled CJK subset first, then an optional system font.
+/// Font chain: bundled CJK subset first, then a system font that is only loaded
+/// (lazily, ~20 MB read) when a character is missing from the bundled subset.
 pub struct Fonts {
-    chain: Vec<FontArc>,
+    bundled: FontArc,
+    fallback: OnceLock<Option<FontArc>>,
 }
 
-const NO_LINE_START: &str = "，。、！？：；）」』】》〉,.!?:;)]}…ー～";
+pub(crate) const NO_LINE_START: &str = "，。、！？：；）」』】》〉,.!?:;)]}…ー～";
 
 impl Fonts {
     pub fn get() -> &'static Fonts {
         static F: OnceLock<Fonts> = OnceLock::new();
-        F.get_or_init(|| {
-            let mut chain = vec![FontArc::try_from_slice(crate::fonts::cjk_font()).expect("bundled font")];
-            if let Some((bytes, idx)) = crate::fonts::load_system_fallback()
-                && let Ok(f) = ab_glyph::FontVec::try_from_vec_and_index(bytes, idx)
-            {
-                chain.push(FontArc::new(f));
-            }
-            Fonts { chain }
+        F.get_or_init(|| Fonts {
+            bundled: FontArc::try_from_slice(crate::fonts::cjk_font()).expect("bundled font"),
+            fallback: OnceLock::new(),
         })
     }
 
+    fn fallback(&self) -> Option<&FontArc> {
+        self.fallback
+            .get_or_init(|| {
+                let (bytes, idx) = crate::fonts::load_system_fallback()?;
+                ab_glyph::FontVec::try_from_vec_and_index(bytes, idx).ok().map(FontArc::new)
+            })
+            .as_ref()
+    }
+
+    /// Font index (0 = bundled, 1 = system fallback) and glyph for `c`.
     fn pick(&self, c: char) -> (usize, GlyphId) {
-        for (i, f) in self.chain.iter().enumerate() {
-            let g = f.glyph_id(c);
-            if g.0 != 0 {
-                return (i, g);
-            }
+        let g = self.bundled.glyph_id(c);
+        if g.0 != 0 || c.is_whitespace() || c.is_control() {
+            return (0, g);
         }
-        (0, self.chain[0].glyph_id(c))
+        match self.fallback() {
+            Some(f) if f.glyph_id(c).0 != 0 => (1, f.glyph_id(c)),
+            _ => (0, g),
+        }
+    }
+
+    fn font(&self, i: usize) -> &FontArc {
+        match (i, self.fallback.get()) {
+            (1, Some(Some(f))) => f,
+            _ => &self.bundled,
+        }
+    }
+
+    /// Whether the bundled font has a glyph for `c` (same answer for GUI and export).
+    pub fn has(&self, c: char) -> bool {
+        self.bundled.glyph_id(c).0 != 0
     }
 
     fn advance(&self, c: char, size: f32) -> f32 {
         let (i, g) = self.pick(c);
-        self.chain[i].as_scaled(PxScale::from(size)).h_advance(g)
+        self.font(i).as_scaled(PxScale::from(size)).h_advance(g)
     }
 
     pub fn measure(&self, s: &str, size: f32) -> f32 {
@@ -53,11 +73,11 @@ impl Fonts {
     }
 
     fn ascent(&self, size: f32) -> f32 {
-        self.chain[0].as_scaled(PxScale::from(size)).ascent()
+        self.bundled.as_scaled(PxScale::from(size)).ascent()
     }
 
     fn descent(&self, size: f32) -> f32 {
-        self.chain[0].as_scaled(PxScale::from(size)).descent()
+        self.bundled.as_scaled(PxScale::from(size)).descent()
     }
 
     /// Greedy line wrapping: break at spaces for Latin words, anywhere between CJK characters.
@@ -146,7 +166,7 @@ pub fn draw_line(pm: &mut Pixmap, s: &str, size: f32, x: f32, baseline: f32, c: 
     let mut pen = x;
     for ch in s.chars() {
         let (i, gid) = fonts.pick(ch);
-        let font = &fonts.chain[i];
+        let font = fonts.font(i);
         let scale = PxScale::from(size);
         let g = gid.with_scale_and_position(scale, point(pen, baseline));
         if let Some(og) = font.outline_glyph(g) {
@@ -194,6 +214,18 @@ pub fn draw_prim(pm: &mut Pixmap, p: &P) {
             }
             let Some(path) = path_of(pts, *closed) else { return };
             if *closed && let Some(f) = fill {
+                pm.fill_path(&path, &paint(*f), FillRule::Winding, Transform::identity(), None);
+            }
+            if let Some(s) = stroke {
+                stroke_path(pm, &path, *s, *dash);
+            }
+        }
+        P::Shape { pts, fill, stroke, dash, .. } => {
+            if pts.len() < 3 {
+                return;
+            }
+            let Some(path) = path_of(pts, true) else { return };
+            if let Some(f) = fill {
                 pm.fill_path(&path, &paint(*f), FillRule::Winding, Transform::identity(), None);
             }
             if let Some(s) = stroke {
@@ -296,18 +328,36 @@ pub fn render_items(items: &[Item], width: u32, height: u32) -> Result<Pixmap, S
     Ok(pm)
 }
 
-/// Encode a pixmap as PNG (demultiplying alpha).
+/// Encode a pixmap as PNG. Opaque images (every storyboard frame) are written as
+/// 8-bit RGB, which is ~25% less data to filter and deflate than RGBA.
 pub fn encode_png(pm: &Pixmap) -> Result<Vec<u8>, String> {
-    let mut rgba = Vec::with_capacity(pm.data().len());
-    for p in pm.pixels() {
-        let c = p.demultiply();
-        rgba.extend_from_slice(&[c.red(), c.green(), c.blue(), c.alpha()]);
+    let opaque = pm.pixels().iter().all(|p| p.alpha() == 255);
+    let mut buf = Vec::with_capacity(pm.data().len());
+    if opaque {
+        for p in pm.pixels() {
+            buf.extend_from_slice(&[p.red(), p.green(), p.blue()]);
+        }
+    } else {
+        for p in pm.pixels() {
+            let c = p.demultiply();
+            buf.extend_from_slice(&[c.red(), c.green(), c.blue(), c.alpha()]);
+        }
     }
-    let img = image::RgbaImage::from_raw(pm.width(), pm.height(), rgba).ok_or("bad image buffer size")?;
-    let mut out = std::io::Cursor::new(Vec::new());
-    img.write_to(&mut out, image::ImageFormat::Png).map_err(|e| format!("PNG 編碼失敗：{e}"))?;
-    Ok(out.into_inner())
+    let mut out = Vec::new();
+    {
+        let mut enc = png::Encoder::new(&mut out, pm.width(), pm.height());
+        enc.set_color(if opaque { png::ColorType::Rgb } else { png::ColorType::Rgba });
+        enc.set_depth(png::BitDepth::Eight);
+        enc.set_compression(PNG_COMPRESSION);
+        let err = |e: png::EncodingError| format!("PNG 編碼失敗：{e}");
+        let mut w = enc.write_header().map_err(err)?;
+        w.write_image_data(&buf).map_err(err)?;
+        w.finish().map_err(err)?;
+    }
+    Ok(out)
 }
+
+const PNG_COMPRESSION: png::Compression = png::Compression::Fast;
 
 #[cfg(test)]
 mod tests {

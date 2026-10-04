@@ -128,7 +128,10 @@ pub fn sample_project() -> Project {
     mei.action = "站在店門旁，看到小明後舉手揮手打招呼".into();
     mei.expression = "微笑".into();
     mei.dialogue = "嗨！今天也是老樣子嗎？".into();
+    ming.dialogue = "今天一定要試試新口味……".into();
+    ming.bubble = BubbleSettings { style: BubbleStyle::Thought, ..BubbleSettings::default() };
     s1.actors = vec![ming, mei];
+    s1.narration_box = true;
 
     // ---- Shot 2: at the counter
     let hz2 = 0.36;
@@ -174,9 +177,11 @@ pub fn sample_project() -> Project {
     let mut mei2 = actor(&p, "actor_1", "char_2", "talk", 1260.0, 690.0, -15.0, ds(hz2, 690.0));
     mei2.action = "站在吧台後方，一邊聽點餐一邊比手勢".into();
     mei2.dialogue = "一杯拿鐵、少冰，對吧？".into();
+    mei2.bubble = BubbleSettings { vertical: true, ..BubbleSettings::default() };
     let mut ming2 = actor(&p, "actor_2", "char_1", "walk", 300.0, 1010.0, 70.0, ds(hz2, 1010.0));
     ming2.action = "走到吧台前，伸手指向牆上的菜單".into();
-    ming2.dialogue = "對！再加一份肉桂。".into();
+    ming2.dialogue = "對！再加一份肉桂！".into();
+    ming2.bubble = BubbleSettings { style: BubbleStyle::Shout, ..BubbleSettings::default() };
     ming2.movement = Movement {
         enabled: true,
         path: vec![[520.0, 940.0], [760.0, 925.0]],
@@ -244,6 +249,7 @@ pub fn sample_project() -> Project {
     let mut mei3 = actor(&p, "actor_2", "char_2", "carry", 1720.0, 1000.0, -90.0, ds(hz3, 1000.0));
     mei3.action = "雙手捧著拿鐵，從右側走向桌邊".into();
     mei3.dialogue = "請慢用，今天的拉花是愛心喔。".into();
+    mei3.bubble = BubbleSettings { style: BubbleStyle::Whisper, ..BubbleSettings::default() };
     mei3.movement = Movement {
         enabled: true,
         path: vec![[1450.0, 960.0], [1290.0, 935.0]],
@@ -257,6 +263,9 @@ pub fn sample_project() -> Project {
     let mut chen = actor(&p, "actor_3", "char_3", "arms_crossed", 1500.0, 600.0, -40.0, ds(hz3, 600.0));
     chen.action = "在吧台後雙手抱胸，看著兩人".into();
     chen.expression = "嘴角微微上揚".into();
+    chen.dialogue = "店長老陳默默記下：這是小明的第 100 杯拿鐵。".into();
+    chen.bubble =
+        BubbleSettings { style: BubbleStyle::Narration, offset: [-160.0, -230.0], ..BubbleSettings::default() };
     s3.actors = vec![chen, ming3, mei3];
 
     p.shots = vec![s1, s2, s3];

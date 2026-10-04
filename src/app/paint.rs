@@ -175,6 +175,36 @@ pub fn paint_prim(painter: &Painter, p: &P, view: View, min_text: f32) {
                 painter.add(Shape::line(v, st));
             }
         }
+        P::Shape { pts, center, fill, stroke, dash } => {
+            if pts.len() < 3 {
+                return;
+            }
+            let v: Vec<Pos2> = pts.iter().map(|q| view.pt(*q)).collect();
+            if let Some(f) = fill {
+                // star-shaped polygon: triangle fan around the centre
+                let mut mesh = egui::Mesh::default();
+                let col = c32(*f);
+                mesh.colored_vertex(view.pt(*center), col);
+                for p in &v {
+                    mesh.colored_vertex(*p, col);
+                }
+                let n = v.len() as u32;
+                for i in 0..n {
+                    mesh.add_triangle(0, 1 + i, 1 + (i + 1) % n);
+                }
+                painter.add(Shape::mesh(mesh));
+            }
+            if let Some(k) = stroke {
+                let st = Stroke::new((k.width * s).max(0.6), c32(k.color));
+                let v = closed_loop(v);
+                if *dash {
+                    let w = st.width.max(1.0);
+                    painter.extend(Shape::dashed_line(&v, st, w * 3.0, w * 2.2));
+                } else {
+                    painter.add(Shape::line(v, st));
+                }
+            }
+        }
         P::Ellipse { c, r, fill, stroke } => {
             let c = view.pt(*c);
             let r = vec2(r[0] * s, r[1] * s);

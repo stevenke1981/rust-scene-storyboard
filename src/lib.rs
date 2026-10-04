@@ -9,6 +9,7 @@
 //! * [`export`], [`cli`] – export folders and the headless command line
 //! * `app` – the egui editor (binary only)
 
+pub mod bubble;
 pub mod cli;
 pub mod describe;
 pub mod draw;

@@ -169,7 +169,8 @@ pub fn storyboard_html(p: &crate::model::Project, pngs: &[Vec<u8>], embed: bool)
         h.push_str("</div><div>");
         h.push_str(&format!("<h3>畫面敘述</h3><div class=\"narr\">{}</div>", esc(&d.narrative)));
         if !d.narration.is_empty() {
-            h.push_str(&format!("<h3>旁白</h3><div class=\"vo\">{}</div>", esc(&d.narration)));
+            let boxed = if d.narration_box { "（草稿圖以旁白框顯示）" } else { "" };
+            h.push_str(&format!("<h3>旁白{boxed}</h3><div class=\"vo\">{}</div>", esc(&d.narration)));
         }
         if !d.actors.is_empty() {
             h.push_str("<h3>人物與走位</h3>");
@@ -191,7 +192,11 @@ pub fn storyboard_html(p: &crate::model::Project, pngs: &[Vec<u8>], embed: bool)
                 row("大小", &a.size, "");
                 row("動作", &a.action, "");
                 row("表情", &a.expression, "");
-                let say = if a.dialogue.is_empty() { String::new() } else { format!("「{}」", a.dialogue) };
+                let say = if a.dialogue.is_empty() {
+                    String::new()
+                } else {
+                    format!("「{}」　〔{}〕", a.dialogue, a.bubble_desc)
+                };
                 row("對白", &say, "say");
                 if let Some(m) = &a.movement {
                     row(&format!("移動 {}", circled(m.number)), &m.text, "");

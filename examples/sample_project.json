@@ -159,7 +159,17 @@
           },
           "action": "背著後背包，快步從畫面左側走向咖啡店大門",
           "expression": "期待、心情很好",
-          "dialogue": "",
+          "dialogue": "今天一定要試試新口味……",
+          "bubble": {
+            "style": "thought",
+            "offset": [
+              0.0,
+              0.0
+            ],
+            "wrap": 0.0,
+            "vertical": false,
+            "text_scale": 1.0
+          },
           "movement": {
             "enabled": true,
             "path": [
@@ -284,6 +294,16 @@
           "action": "站在店門旁，看到小明後舉手揮手打招呼",
           "expression": "微笑",
           "dialogue": "嗨！今天也是老樣子嗎？",
+          "bubble": {
+            "style": "speech",
+            "offset": [
+              0.0,
+              0.0
+            ],
+            "wrap": 0.0,
+            "vertical": false,
+            "text_scale": 1.0
+          },
           "movement": {
             "enabled": false,
             "path": [],
@@ -397,6 +417,7 @@
         }
       ],
       "narration": "午後的街角，陽光灑在咖啡店的招牌上。小明一如往常，快步走向那扇熟悉的木門。",
+      "narration_box": true,
       "notes": "開場建立地點，讓觀眾看清楚門口與招牌。"
     },
     {
@@ -521,6 +542,16 @@
           "action": "站在吧台後方，一邊聽點餐一邊比手勢",
           "expression": "",
           "dialogue": "一杯拿鐵、少冰，對吧？",
+          "bubble": {
+            "style": "speech",
+            "offset": [
+              0.0,
+              0.0
+            ],
+            "wrap": 0.0,
+            "vertical": true,
+            "text_scale": 1.0
+          },
           "movement": {
             "enabled": false,
             "path": [],
@@ -635,7 +666,17 @@
           },
           "action": "走到吧台前，伸手指向牆上的菜單",
           "expression": "",
-          "dialogue": "對！再加一份肉桂。",
+          "dialogue": "對！再加一份肉桂！",
+          "bubble": {
+            "style": "shout",
+            "offset": [
+              0.0,
+              0.0
+            ],
+            "wrap": 0.0,
+            "vertical": false,
+            "text_scale": 1.0
+          },
           "movement": {
             "enabled": true,
             "path": [
@@ -722,6 +763,7 @@
         }
       ],
       "narration": "小明走到吧台前，指著牆上的菜單點了他的老樣子；小美一邊聽一邊比手勢確認。",
+      "narration_box": false,
       "notes": ""
     },
     {
@@ -845,7 +887,17 @@
           },
           "action": "在吧台後雙手抱胸，看著兩人",
           "expression": "嘴角微微上揚",
-          "dialogue": "",
+          "dialogue": "店長老陳默默記下：這是小明的第 100 杯拿鐵。",
+          "bubble": {
+            "style": "narration",
+            "offset": [
+              -160.0,
+              -230.0
+            ],
+            "wrap": 0.0,
+            "vertical": false,
+            "text_scale": 1.0
+          },
           "movement": {
             "enabled": false,
             "path": [],
@@ -961,6 +1013,16 @@
           "action": "坐在窗邊的椅子上，轉頭看向走過來的小美",
           "expression": "驚喜",
           "dialogue": "",
+          "bubble": {
+            "style": "speech",
+            "offset": [
+              0.0,
+              0.0
+            ],
+            "wrap": 0.0,
+            "vertical": false,
+            "text_scale": 1.0
+          },
           "movement": {
             "enabled": false,
             "path": [],
@@ -1076,6 +1138,16 @@
           "action": "雙手捧著拿鐵，從右側走向桌邊",
           "expression": "",
           "dialogue": "請慢用，今天的拉花是愛心喔。",
+          "bubble": {
+            "style": "whisper",
+            "offset": [
+              0.0,
+              0.0
+            ],
+            "wrap": 0.0,
+            "vertical": false,
+            "text_scale": 1.0
+          },
           "movement": {
             "enabled": true,
             "path": [
@@ -1186,6 +1258,7 @@
         }
       ],
       "narration": "黃昏時分，小美端著拿鐵走向坐在窗邊的小明。吧台後的老陳雙手抱胸，嘴角微微上揚。",
+      "narration_box": false,
       "notes": "結尾鏡頭，保留老陳在背景的反應。"
     }
   ]

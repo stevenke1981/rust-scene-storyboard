@@ -190,6 +190,61 @@ labeled_enum! {
 }
 
 labeled_enum! {
+    /// Comic / manga balloon style of a line of dialogue (對白框樣式).
+    BubbleStyle default Speech {
+        Speech => ("speech", "對話", "Speech"),
+        Thought => ("thought", "內心獨白", "Thought"),
+        Shout => ("shout", "吶喊", "Shout"),
+        Whisper => ("whisper", "悄悄話", "Whisper"),
+        Narration => ("narration", "旁白框", "Caption"),
+    }
+}
+
+impl BubbleStyle {
+    /// Shape description used in Markdown / HTML.
+    pub fn shape_zh(self) -> &'static str {
+        match self {
+            BubbleStyle::Speech => "對話泡泡（圓角橢圓＋尖尾）",
+            BubbleStyle::Thought => "思考泡泡（雲朵＋小圓圈）",
+            BubbleStyle::Shout => "吶喊泡泡（爆炸鋸齒框）",
+            BubbleStyle::Whisper => "悄悄話泡泡（虛線框）",
+            BubbleStyle::Narration => "旁白框（矩形說明框）",
+        }
+    }
+    /// Verb used in narrative text: 「小明大喊：…」.
+    pub fn verb_zh(self) -> &'static str {
+        match self {
+            BubbleStyle::Speech => "說",
+            BubbleStyle::Thought => "心想",
+            BubbleStyle::Shout => "大喊",
+            BubbleStyle::Whisper => "小聲地說",
+            BubbleStyle::Narration => "的旁白",
+        }
+    }
+}
+
+/// How a character's dialogue balloon is drawn. Missing in v0.1 projects → defaults.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct BubbleSettings {
+    pub style: BubbleStyle,
+    /// Offset of the balloon from its automatic position (canvas px).
+    pub offset: [f32; 2],
+    /// Wrap length in canvas px (line width, or column height for vertical text); 0 = automatic.
+    pub wrap: f32,
+    /// Vertical CJK text (直書), columns right to left.
+    pub vertical: bool,
+    /// Text size multiplier.
+    pub text_scale: f32,
+}
+
+impl Default for BubbleSettings {
+    fn default() -> Self {
+        BubbleSettings { style: BubbleStyle::Speech, offset: [0.0, 0.0], wrap: 0.0, vertical: false, text_scale: 1.0 }
+    }
+}
+
+labeled_enum! {
     /// Prop / set piece types, drawn as simple line-art primitives.
     PropKind default Box {
         Box => ("box", "箱子", "Box"),
@@ -432,8 +487,10 @@ pub struct Actor {
     pub action: String,
     /// Facial expression / emotion.
     pub expression: String,
-    /// Line of dialogue (shown as a speech bubble).
+    /// Line of dialogue (shown as a comic balloon).
     pub dialogue: String,
+    /// Balloon style / position of the dialogue.
+    pub bubble: BubbleSettings,
     pub movement: Movement,
 }
 
@@ -450,6 +507,7 @@ impl Default for Actor {
             action: String::new(),
             expression: String::new(),
             dialogue: String::new(),
+            bubble: BubbleSettings::default(),
             movement: Movement::default(),
         }
     }
@@ -553,6 +611,8 @@ pub struct Shot {
     pub props: Vec<Prop>,
     /// Narration / voice-over text (旁白).
     pub narration: String,
+    /// Also show the narration as a caption box in the draft image.
+    pub narration_box: bool,
     /// Director's notes (導演備註).
     pub notes: String,
 }
@@ -570,6 +630,7 @@ impl Default for Shot {
             actors: vec![],
             props: vec![],
             narration: String::new(),
+            narration_box: false,
             notes: String::new(),
         }
     }
@@ -647,6 +708,12 @@ impl Project {
                 a.scale = a.scale.clamp(0.05, 8.0);
                 if !a.facing.is_finite() {
                     a.facing = 0.0;
+                }
+                let b = &mut a.bubble;
+                b.text_scale = if b.text_scale.is_finite() { b.text_scale.clamp(0.3, 4.0) } else { 1.0 };
+                b.wrap = if b.wrap.is_finite() { b.wrap.clamp(0.0, 8000.0) } else { 0.0 };
+                if !b.offset.iter().all(|v| v.is_finite()) {
+                    b.offset = [0.0, 0.0];
                 }
             }
         }
@@ -748,6 +815,49 @@ impl Shot {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bubble_settings_round_trip() {
+        let p = crate::sample::sample_project();
+        let s = p.to_json();
+        for style in ["thought", "shout", "whisper", "narration", "speech"] {
+            assert!(s.contains(&format!("\"style\": \"{style}\"")), "{style}");
+        }
+        assert!(s.contains("\"vertical\": true"));
+        assert!(s.contains("\"narration_box\": true"));
+        let q = Project::from_json(&s).unwrap();
+        let b = &q.shots[2].actors.iter().find(|a| a.bubble.style == BubbleStyle::Narration).unwrap().bubble;
+        assert_eq!(b.offset, [-160.0, -230.0]);
+        assert_eq!(p, q);
+    }
+
+    #[test]
+    fn v01_projects_without_bubbles_still_load() {
+        // Strip every v0.2 field from the sample → what a v0.1 file looks like.
+        let mut v: serde_json::Value = serde_json::from_str(&crate::sample::sample_project().to_json()).unwrap();
+        for shot in v["shots"].as_array_mut().unwrap() {
+            shot.as_object_mut().unwrap().remove("narration_box");
+            for a in shot["actors"].as_array_mut().unwrap() {
+                a.as_object_mut().unwrap().remove("bubble");
+            }
+        }
+        let old = serde_json::to_string(&v).unwrap();
+        assert!(!old.contains("bubble") && !old.contains("narration_box"));
+        let p = Project::from_json(&old).unwrap();
+        for shot in &p.shots {
+            assert!(!shot.narration_box);
+            for a in &shot.actors {
+                assert_eq!(a.bubble, BubbleSettings::default());
+            }
+        }
+        // Partial / out-of-range bubble objects are filled in and clamped.
+        let partial =
+            old.replacen("\"dialogue\":", "\"bubble\":{\"style\":\"shout\",\"text_scale\":99.0},\"dialogue\":", 1);
+        let p = Project::from_json(&partial).unwrap();
+        let b = &p.shots[0].actors[0].bubble;
+        assert_eq!(b.style, BubbleStyle::Shout);
+        assert!(b.text_scale <= 4.0 && !b.vertical && b.offset == [0.0, 0.0]);
+    }
 
     #[test]
     fn json_round_trip() {

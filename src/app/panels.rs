@@ -339,6 +339,7 @@ impl App {
         single(ui, &mut shot.camera.notes, "鏡頭焦段、構圖說明…");
         section(ui, "旁白 / 敘述 Narration");
         multiline(ui, &mut shot.narration, 3, "旁白（會寫入 Markdown / HTML；留空則自動產生敘述）");
+        ui.checkbox(&mut shot.narration_box, "在草稿圖左上角顯示旁白框（漫畫說明框）");
         ui.label("導演備註");
         multiline(ui, &mut shot.notes, 2, "其他備註");
         ui.add_space(4.0);
@@ -496,7 +497,37 @@ impl App {
         ui.label("表情 / 情緒");
         single(ui, &mut a.expression, "例：好奇、微笑");
         ui.label("對白");
-        multiline(ui, &mut a.dialogue, 2, "台詞（草稿圖顯示為對白泡泡）");
+        multiline(ui, &mut a.dialogue, 2, "台詞（草稿圖顯示為漫畫對白框，可在畫布上拖曳）");
+        ui.horizontal_wrapped(|ui| {
+            ui.label("對白框");
+            for &st in BubbleStyle::ALL {
+                let icon = match st {
+                    BubbleStyle::Speech => "💬",
+                    BubbleStyle::Thought => "☁",
+                    BubbleStyle::Shout => "💥",
+                    BubbleStyle::Whisper => "┄",
+                    BubbleStyle::Narration => "□",
+                };
+                ui.selectable_value(&mut a.bubble.style, st, format!("{icon} {}", st.zh()))
+                    .on_hover_text(st.shape_zh());
+            }
+        });
+        ui.horizontal(|ui| {
+            ui.checkbox(&mut a.bubble.vertical, "直書").on_hover_text("由上而下、由右至左排列（中文直排）");
+            ui.label("字級");
+            ui.add(egui::DragValue::new(&mut a.bubble.text_scale).range(0.3..=4.0).speed(0.02).prefix("× "));
+            ui.label(if a.bubble.vertical { "每行高" } else { "每行寬" });
+            ui.add(egui::DragValue::new(&mut a.bubble.wrap).range(0.0..=4000.0).speed(4.0).suffix(" px"))
+                .on_hover_text("0 = 自動");
+        });
+        ui.horizontal(|ui| {
+            ui.label("位置偏移");
+            ui.add(egui::DragValue::new(&mut a.bubble.offset[0]).speed(2.0).prefix("x "));
+            ui.add(egui::DragValue::new(&mut a.bubble.offset[1]).speed(2.0).prefix("y "));
+            if ui.small_button("↺ 自動位置").clicked() {
+                a.bubble.offset = [0.0, 0.0];
+            }
+        });
 
         section(ui, "走位 Movement");
         let was = a.movement.enabled;
