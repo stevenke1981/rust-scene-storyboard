@@ -51,7 +51,7 @@ jobs:
           grep -q 'data:image/png;base64,' "$D/storyboard.html"
           grep -q '人物與走位' "$D/storyboard.md"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sample-export
           path: out/
