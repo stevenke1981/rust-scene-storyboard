@@ -253,6 +253,9 @@ impl App {
                     });
                     ui.label("角色描述");
                     multiline(ui, &mut m.description, 2, "年齡、外型、個性、服裝…");
+                    ui.label("影片 AI 外觀（英文 / 中文）");
+                    single(ui, &mut m.appearance, "e.g. male student, 20, short black hair, grey hoodie");
+                    single(ui, &mut m.appearance_zh, "中文外觀（留空則用角色描述）");
                     if ui.small_button("🗑 刪除此角色").clicked() {
                         del = true;
                     }
@@ -342,6 +345,9 @@ impl App {
         ui.checkbox(&mut shot.narration_box, "在草稿圖左上角顯示旁白框（漫畫說明框）");
         ui.label("導演備註");
         multiline(ui, &mut shot.notes, 2, "其他備註");
+        ui.label("影片 AI 補充（英文 / 中文，加入提示詞）");
+        single(ui, &mut shot.video_note, "e.g. warm sunlight, leaves moving in the wind");
+        single(ui, &mut shot.video_note_zh, "例如：午後暖陽、樹葉隨風搖動");
         ui.add_space(4.0);
         if ui.button("📝 預覽本鏡頭的自動敘述").clicked() {
             self.show_text = true;

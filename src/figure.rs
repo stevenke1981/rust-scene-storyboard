@@ -65,13 +65,23 @@ impl FigureSpec {
 
     /// Ghost figure at the end of the actor's movement path (if any).
     pub fn ghost_of_actor(p: &Project, shot: &Shot, a: &Actor) -> Option<FigureSpec> {
+        if !a.movement.ghost {
+            return None;
+        }
+        let mut f = FigureSpec::end_of_actor(p, shot, a)?;
+        f.ghost = true;
+        Some(f)
+    }
+
+    /// The actor at the end of its movement (position, depth scale, end pose and
+    /// facing), drawn as a normal figure. `None` when the actor does not move.
+    pub fn end_of_actor(p: &Project, shot: &Shot, a: &Actor) -> Option<FigureSpec> {
         let m = &a.movement;
-        if !m.is_active() || !m.ghost {
+        if !m.is_active() {
             return None;
         }
         let mut f = FigureSpec::of_actor(p, shot, a);
         let [ex, ey] = a.end_point();
-        f.ghost = true;
         f.x = ex;
         f.y = ey;
         f.ppm *= end_scale_factor(p, shot, a);

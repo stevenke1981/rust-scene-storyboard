@@ -14,7 +14,7 @@ use rss::mannequin::actions::{ACTIONS, floor_pose_names, library_pose};
 use rss::mannequin::body::Body;
 use rss::mannequin::render::{DrawList, Framing, Style, View, draw_body, framing_camera};
 use rss::mannequin::skeleton::{Joint, Skeleton};
-use rss::model::{Actor, CAST_COLORS, CastMember, PoseData, Project, Prop, PropKind, Shot};
+use rss::model::{Actor, CAST_COLORS, CastMember, PoseData, Project, Prop, PropKind, Shot, VideoAspect, VideoPreset};
 use settings::Settings;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -626,6 +626,39 @@ impl App {
                         self.export_opts.formats = Formats::NONE;
                     }
                 });
+                if self.export_opts.formats.video_ai {
+                    ui.add_space(4.0);
+                    ui.label(RichText::new("影片 AI 用（video_ai/ 資料夾）").strong().color(ACCENT));
+                    let v = &mut self.project.video_ai;
+                    egui::Grid::new("vai_grid").num_columns(2).spacing([12.0, 4.0]).show(ui, |ui| {
+                        ui.label("目標模型");
+                        egui::ComboBox::from_id_salt("vai_preset").selected_text(v.preset.zh()).show_ui(ui, |ui| {
+                            for x in VideoPreset::ALL {
+                                ui.selectable_value(&mut v.preset, *x, x.zh());
+                            }
+                        });
+                        ui.end_row();
+                        ui.label("畫面比例");
+                        egui::ComboBox::from_id_salt("vai_aspect").selected_text(v.aspect.zh()).show_ui(ui, |ui| {
+                            for x in VideoAspect::ALL {
+                                ui.selectable_value(&mut v.aspect, *x, x.zh());
+                            }
+                        });
+                        ui.end_row();
+                        ui.label("風格");
+                        ui.add(egui::TextEdit::singleline(&mut v.style).desired_width(300.0));
+                        ui.end_row();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.checkbox(&mut v.keep_floor, "保留淡淡的地平線");
+                        ui.checkbox(&mut v.audio, "生成音訊（對白）");
+                    });
+                    ui.label(
+                        RichText::new("每鏡輸出乾淨的首幀 / 尾幀 PNG（無標籤、箭頭、泡泡）＋ prompts.txt / json / md")
+                            .small()
+                            .weak(),
+                    );
+                }
                 ui.add_space(4.0);
                 ui.label(RichText::new("草稿圖內容").strong().color(ACCENT));
                 ui.horizontal_wrapped(|ui| {

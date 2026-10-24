@@ -332,6 +332,77 @@ pub const ASPECT_PRESETS: [(&str, &str, u32, u32); 5] = [
     ("2.39:1", "2.39:1 電影寬銀幕 1920×804", 1920, 804),
 ];
 
+labeled_enum! {
+    /// Target image-to-video model for the「影片 AI 用」export.
+    VideoPreset default Seedance2 {
+        Seedance2 => ("seedance_2", "Seedance 2.0（首尾幀）", "Seedance 2.0"),
+        Generic => ("generic", "通用影片 AI", "Generic"),
+    }
+}
+
+labeled_enum! {
+    /// Output aspect ratio (Seedance 2.0 `ratio` values). `adaptive` keeps the canvas shape.
+    VideoAspect default Adaptive {
+        Adaptive => ("adaptive", "自動（依畫布）", "adaptive"),
+        R16x9 => ("16:9", "16:9 橫式", "16:9"),
+        R9x16 => ("9:16", "9:16 直式", "9:16"),
+        R4x3 => ("4:3", "4:3", "4:3"),
+        R3x4 => ("3:4", "3:4", "3:4"),
+        R1x1 => ("1:1", "1:1 方形", "1:1"),
+        R21x9 => ("21:9", "21:9 寬銀幕", "21:9"),
+    }
+}
+
+impl VideoAspect {
+    /// Width / height, or `None` for adaptive.
+    pub fn ratio(self) -> Option<f32> {
+        Some(match self {
+            VideoAspect::Adaptive => return None,
+            VideoAspect::R16x9 => 16.0 / 9.0,
+            VideoAspect::R9x16 => 9.0 / 16.0,
+            VideoAspect::R4x3 => 4.0 / 3.0,
+            VideoAspect::R3x4 => 3.0 / 4.0,
+            VideoAspect::R1x1 => 1.0,
+            VideoAspect::R21x9 => 21.0 / 9.0,
+        })
+    }
+
+    /// Closest fixed ratio to a width / height.
+    pub fn nearest(w: f32, h: f32) -> VideoAspect {
+        let r = (w / h.max(1.0)).ln();
+        *VideoAspect::ALL[1..]
+            .iter()
+            .min_by(|a, b| (a.ratio().unwrap().ln() - r).abs().total_cmp(&(b.ratio().unwrap().ln() - r).abs()))
+            .unwrap()
+    }
+}
+
+/// Project settings for the「影片 AI 用」export (clean frames + prompts).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct VideoAiSettings {
+    pub preset: VideoPreset,
+    pub aspect: VideoAspect,
+    /// Visual style line, e.g. "cinematic realistic".
+    pub style: String,
+    /// Keep a subtle floor tone and horizon line in the clean frames.
+    pub keep_floor: bool,
+    /// Ask for synchronised audio / spoken dialogue (Seedance `generate_audio`).
+    pub audio: bool,
+}
+
+impl Default for VideoAiSettings {
+    fn default() -> Self {
+        VideoAiSettings {
+            preset: VideoPreset::Seedance2,
+            aspect: VideoAspect::Adaptive,
+            style: "cinematic realistic, natural lighting".into(),
+            keep_floor: false,
+            audio: true,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct CastMember {
@@ -344,6 +415,10 @@ pub struct CastMember {
     pub height: f32,
     pub body_type: BodyType,
     pub head_size: f32,
+    /// Short English appearance for video prompts (age, hair, clothing…).
+    pub appearance: String,
+    /// 中文外觀描述（影片提示詞用；留空時用 `description`）。
+    pub appearance_zh: String,
 }
 
 impl Default for CastMember {
@@ -356,6 +431,8 @@ impl Default for CastMember {
             height: 1.70,
             body_type: BodyType::Average,
             head_size: 1.0,
+            appearance: String::new(),
+            appearance_zh: String::new(),
         }
     }
 }
@@ -615,6 +692,10 @@ pub struct Shot {
     pub narration_box: bool,
     /// Director's notes (導演備註).
     pub notes: String,
+    /// Extra English sentence appended to this shot's video-AI prompt.
+    pub video_note: String,
+    /// 影片 AI 提示詞的中文補充說明。
+    pub video_note_zh: String,
 }
 
 impl Default for Shot {
@@ -632,6 +713,8 @@ impl Default for Shot {
             narration: String::new(),
             narration_box: false,
             notes: String::new(),
+            video_note: String::new(),
+            video_note_zh: String::new(),
         }
     }
 }
@@ -647,6 +730,8 @@ pub struct Project {
     pub canvas: Canvas,
     pub cast: Vec<CastMember>,
     pub shots: Vec<Shot>,
+    /// 「影片 AI 用」export settings (missing in v0.1/v0.2 files → defaults).
+    pub video_ai: VideoAiSettings,
 }
 
 impl Default for Project {
@@ -659,6 +744,7 @@ impl Default for Project {
             canvas: Canvas::default(),
             cast: vec![],
             shots: vec![Shot::default()],
+            video_ai: VideoAiSettings::default(),
         }
     }
 }

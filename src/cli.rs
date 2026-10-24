@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use crate::export::{ExportOptions, Formats, export_to, project_dir_name, render_shot};
 use crate::mannequin::actions::{ACTIONS, floor_pose_names};
 use crate::mannequin::skeleton::{Proportions, Skeleton};
-use crate::model::Project;
+use crate::model::{Project, VideoAspect, VideoPreset};
 
 pub const HELP: &str = "\
 rust-scene-storyboard — 影片分鏡：角色線稿姿勢 × 道具 × 場景 × 走位
@@ -13,11 +13,18 @@ rust-scene-storyboard — 影片分鏡：角色線稿姿勢 × 道具 × 場景 
   rust-scene-storyboard [project.json]                 開啟 GUI（可指定專案）
   rust-scene-storyboard --export <project.json> [out_base] [選項]
         建立 <out_base>/<專案名>_<YYYYMMDD_HHMMSS>/ 並輸出；stdout 第一行為資料夾路徑
-        --formats <list>   png,overview,md,html,project 或 all（預設 all）
+        --formats <list>   png,overview,md,html,project,video_ai 或 all（all 不含 video_ai）
         --no-subdir        直接寫入 out_base
         --name <name>      子資料夾名稱前綴（預設為專案檔名）
         --no-labels / --no-motion / --no-dialogue / --no-header / --no-ghosts / --no-prop-labels
         --link-images      HTML 以檔名連結圖片（預設以 base64 內嵌）
+  rust-scene-storyboard --export-video-ai <project.json> <out_dir> [選項]
+        影片 AI 用：每鏡 shot_XX_start.png / shot_XX_end.png（乾淨畫面）＋ prompts.txt/json/md
+        --preset seedance|generic   目標模型（預設 seedance = Seedance 2.0 首尾幀）
+        --aspect adaptive|16:9|9:16|4:3|3:4|1:1|21:9
+        --style <text>              風格描述（預設 cinematic realistic, natural lighting）
+        --keep-floor / --no-floor   保留淡淡的地平線
+        --no-audio                  generate_audio = false
   rust-scene-storyboard --render <project.json> <N> <out.png>   只輸出第 N 個鏡頭
   rust-scene-storyboard --sample <out.json>            寫出範例專案
   rust-scene-storyboard --poses                        列出姿勢庫
@@ -130,6 +137,57 @@ pub fn run(args: &[String]) -> Option<i32> {
                 return fail("沒有選擇任何輸出格式");
             }
             match export_to(&p, &base, &name, subdir, &opts) {
+                Ok(rep) => {
+                    println!("{}", rep.dir.display());
+                    for f in rep.files {
+                        println!("{}", f.display());
+                    }
+                    Some(0)
+                }
+                Err(e) => fail(e),
+            }
+        }
+        "--export-video-ai" => {
+            let (Some(path), Some(out)) = (args.get(1), args.get(2)) else {
+                return fail("用法：--export-video-ai <project.json> <out_dir> [選項]");
+            };
+            let mut p = match load(path) {
+                Ok(p) => p,
+                Err(e) => return fail(e),
+            };
+            let mut i = 3;
+            while i < args.len() {
+                let a = args[i].as_str();
+                let mut val = || {
+                    i += 1;
+                    args.get(i).cloned().ok_or_else(|| format!("{a} 需要參數"))
+                };
+                match a {
+                    "--preset" => match val().map(|v| v.to_ascii_lowercase()) {
+                        Ok(v) if v.starts_with("seedance") => p.video_ai.preset = VideoPreset::Seedance2,
+                        Ok(v) if v == "generic" => p.video_ai.preset = VideoPreset::Generic,
+                        Ok(v) => return fail(format!("未知的 preset {v}（seedance|generic）")),
+                        Err(e) => return fail(e),
+                    },
+                    "--aspect" => match val() {
+                        Ok(v) => match VideoAspect::ALL.iter().find(|x| x.key() == v) {
+                            Some(x) => p.video_ai.aspect = *x,
+                            None => return fail(format!("未知的比例 {v}")),
+                        },
+                        Err(e) => return fail(e),
+                    },
+                    "--style" => match val() {
+                        Ok(v) => p.video_ai.style = v,
+                        Err(e) => return fail(e),
+                    },
+                    "--keep-floor" => p.video_ai.keep_floor = true,
+                    "--no-floor" => p.video_ai.keep_floor = false,
+                    "--no-audio" => p.video_ai.audio = false,
+                    s => return fail(format!("未知的選項 {s}")),
+                }
+                i += 1;
+            }
+            match crate::video_ai::export_video_ai(&p, Path::new(out)) {
                 Ok(rep) => {
                     println!("{}", rep.dir.display());
                     for f in rep.files {

@@ -27,25 +27,29 @@ pub struct Formats {
     pub html: bool,
     /// `project.json` (re-editable project file).
     pub project: bool,
+    /// `video_ai/`: clean first/last frames + prompts for video models (Seedance 2.0…).
+    pub video_ai: bool,
 }
 
 impl Default for Formats {
     fn default() -> Self {
-        Formats { png: true, overview: true, md: true, html: true, project: true }
+        Formats { png: true, overview: true, md: true, html: true, project: true, video_ai: false }
     }
 }
 
 impl Formats {
     /// `(cli key, 中文 label, file name)` for every format, in display order.
-    pub const INFO: [(&'static str, &'static str, &'static str); 5] = [
+    pub const INFO: [(&'static str, &'static str, &'static str); 6] = [
         ("png", "鏡頭草稿 PNG", "shot_XX_*.png"),
         ("overview", "分鏡總覽圖", "storyboard_overview.png"),
         ("md", "Markdown 敘述", "storyboard.md"),
         ("html", "HTML 分鏡頁", "storyboard.html"),
         ("project", "專案檔 JSON", "project.json"),
+        ("video_ai", "影片 AI 用（首尾幀＋提示詞）", "video_ai/"),
     ];
 
-    pub const NONE: Formats = Formats { png: false, overview: false, md: false, html: false, project: false };
+    pub const NONE: Formats =
+        Formats { png: false, overview: false, md: false, html: false, project: false, video_ai: false };
 
     pub fn get_mut(&mut self, key: &str) -> Option<&mut bool> {
         Some(match key {
@@ -54,6 +58,7 @@ impl Formats {
             "md" => &mut self.md,
             "html" => &mut self.html,
             "project" => &mut self.project,
+            "video_ai" => &mut self.video_ai,
             _ => return None,
         })
     }
@@ -63,15 +68,18 @@ impl Formats {
         let mut f = Formats::NONE;
         for k in list.split(',').map(|s| s.trim().to_ascii_lowercase()).filter(|s| !s.is_empty()) {
             if k == "all" {
-                return Ok(Formats::default());
+                f = Formats { video_ai: f.video_ai, ..Formats::default() };
+                continue;
             }
             let key = match k.as_str() {
                 "markdown" => "md",
                 "json" => "project",
+                "video" | "video-ai" | "videoai" | "seedance" => "video_ai",
                 "sheet" | "contact" => "overview",
                 other => other,
             };
-            *f.get_mut(key).ok_or_else(|| format!("未知的格式 \"{k}\"（可用：png,overview,md,html,project,all）"))? =
+            *f.get_mut(key)
+                .ok_or_else(|| format!("未知的格式 \"{k}\"（可用：png,overview,md,html,project,video_ai,all）"))? =
                 true;
         }
         Ok(f)
@@ -235,7 +243,7 @@ pub fn render_overview(p: &Project, shots: &[Pixmap]) -> Result<Pixmap, String> 
     Ok(pm)
 }
 
-fn write(dir: &Path, name: &str, data: &[u8], files: &mut Vec<PathBuf>) -> Result<(), String> {
+pub(crate) fn write(dir: &Path, name: &str, data: &[u8], files: &mut Vec<PathBuf>) -> Result<(), String> {
     let path = dir.join(name);
     std::fs::write(&path, data).map_err(|e| format!("寫入 {} 失敗：{e}", path.display()))?;
     files.push(path);
@@ -287,6 +295,9 @@ pub fn export_all(p: &Project, dir: &Path, opts: &ExportOptions) -> Result<Expor
     }
     if f.project {
         write(dir, "project.json", p.to_json().as_bytes(), &mut files)?;
+    }
+    if f.video_ai {
+        files.extend(crate::video_ai::export_video_ai(p, &dir.join("video_ai"))?.files);
     }
     Ok(ExportReport { dir: dir.to_path_buf(), files })
 }

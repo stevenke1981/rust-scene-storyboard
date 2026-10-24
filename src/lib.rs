@@ -21,3 +21,4 @@ pub mod mannequin;
 pub mod model;
 pub mod raster;
 pub mod sample;
+pub mod video_ai;

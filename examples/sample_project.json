@@ -16,7 +16,9 @@
       "color": "#E65A28",
       "height": 1.76,
       "body_type": "masculine",
-      "head_size": 1.0
+      "head_size": 1.0,
+      "appearance": "male student, 20, short black hair, grey hoodie, backpack",
+      "appearance_zh": "20 歲台灣男大學生，黑色短髮，灰色帽 T、牛仔褲、黑色後背包"
     },
     {
       "id": "char_2",
@@ -25,7 +27,9 @@
       "color": "#2878DC",
       "height": 1.62,
       "body_type": "slim",
-      "head_size": 1.0
+      "head_size": 1.0,
+      "appearance": "female barista, 22, ponytail, brown apron",
+      "appearance_zh": "22 歲台灣女店員，綁馬尾，白襯衫配咖啡色圍裙，笑容親切"
     },
     {
       "id": "char_3",
@@ -34,7 +38,9 @@
       "color": "#28A05A",
       "height": 1.72,
       "body_type": "masculine",
-      "head_size": 1.05
+      "head_size": 1.05,
+      "appearance": "café owner, 50s, grey hair, black shirt",
+      "appearance_zh": "50 多歲台灣咖啡店老闆，灰白短髮，捲起袖子的黑襯衫，神情沉穩"
     }
   ],
   "shots": [
@@ -418,7 +424,9 @@
       ],
       "narration": "午後的街角，陽光灑在咖啡店的招牌上。小明一如往常，快步走向那扇熟悉的木門。",
       "narration_box": true,
-      "notes": "開場建立地點，讓觀眾看清楚門口與招牌。"
+      "notes": "開場建立地點，讓觀眾看清楚門口與招牌。",
+      "video_note": "",
+      "video_note_zh": ""
     },
     {
       "id": "shot_2",
@@ -764,7 +772,9 @@
       ],
       "narration": "小明走到吧台前，指著牆上的菜單點了他的老樣子；小美一邊聽一邊比手勢確認。",
       "narration_box": false,
-      "notes": ""
+      "notes": "",
+      "video_note": "",
+      "video_note_zh": ""
     },
     {
       "id": "shot_3",
@@ -1259,7 +1269,16 @@
       ],
       "narration": "黃昏時分，小美端著拿鐵走向坐在窗邊的小明。吧台後的老陳雙手抱胸，嘴角微微上揚。",
       "narration_box": false,
-      "notes": "結尾鏡頭，保留老陳在背景的反應。"
+      "notes": "結尾鏡頭，保留老陳在背景的反應。",
+      "video_note": "",
+      "video_note_zh": ""
     }
-  ]
+  ],
+  "video_ai": {
+    "preset": "seedance_2",
+    "aspect": "adaptive",
+    "style": "cinematic realistic, natural lighting",
+    "keep_floor": false,
+    "audio": true
+  }
 }

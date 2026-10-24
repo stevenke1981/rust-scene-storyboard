@@ -826,6 +826,66 @@ pub fn shot_items(p: &Project, shot: &Shot, opts: &DraftOptions) -> Vec<Item> {
     items
 }
 
+/// Clean frame for image-to-video models: only the set, props and characters —
+/// no grid, labels, arrows, balloons, captions, ghosts or info bars. `end` places
+/// every moving character at its end position / pose / facing.
+pub fn clean_items(p: &Project, shot: &Shot, end: bool, keep_floor: bool) -> Vec<Item> {
+    let (w, h) = (p.canvas.width as f32, p.canvas.height as f32);
+    let u = h / 1080.0;
+    let pitch = shot.camera.angle.pitch();
+    let mut items = vec![Item::Prim(rect(0.0, 0.0, w, h, Some(PAPER), None))];
+    if keep_floor {
+        let bg = background(p, &Shot { floor_grid: false, ..shot.clone() }, u);
+        items = bg
+            .into_iter()
+            .map(|pr| match pr {
+                // fainter horizon line
+                P::Poly { pts, stroke: Some(_), fill: None, closed, dash } => Item::Prim(P::Poly {
+                    pts,
+                    stroke: Some(Stroke2 { width: 1.0 * u, color: [214, 216, 220, 255] }),
+                    fill: None,
+                    closed,
+                    dash,
+                }),
+                o => Item::Prim(o),
+            })
+            .collect();
+    }
+    let mut z: Vec<(f32, Item)> = Vec::new();
+    for pr in &shot.props {
+        for prim in prop_prims(pr, pitch, u) {
+            // Sign lettering and other text would be copied as garbled text by video models.
+            if !matches!(prim, P::Text { .. }) {
+                z.push((pr.y, Item::Prim(prim)));
+            }
+        }
+    }
+    for a in &shot.actors {
+        let (f, s) = match end.then(|| FigureSpec::end_of_actor(p, shot, a)).flatten() {
+            Some(f) => (f, a.scale * end_scale_factor(p, shot, a)),
+            None => (FigureSpec::of_actor(p, shot, a), a.scale),
+        };
+        let rx = 0.28 * p.base_ppm() * s;
+        let ry = rx * (0.12 + 0.5 * top_factor(pitch)) * 0.5;
+        let shrink = 1.0 / (1.0 + f.lift * 2.0);
+        let y = f.y;
+        z.push((
+            y,
+            Item::Prim(P::Ellipse {
+                c: [f.x, f.y],
+                r: [rx * shrink, ry * shrink],
+                fill: Some([0, 0, 0, 24]),
+                stroke: None,
+            }),
+        ));
+        z.push((y, Item::Figure(f)));
+    }
+    // stable sort keeps each prop's / figure's own primitives in order
+    z.sort_by(|a, b| a.0.total_cmp(&b.0));
+    items.extend(z.into_iter().map(|(_, it)| it));
+    items
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

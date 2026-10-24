@@ -50,3 +50,27 @@ fn render_single_shot_and_bad_input() {
     assert!(!bin().arg("--export").arg(&bad).arg(dir.join("x")).status().unwrap().success());
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn export_video_ai() {
+    let dir = tmp("video");
+    let json = dir.join("sample.json");
+    assert!(bin().arg("--sample").arg(&json).status().unwrap().success());
+    let out = dir.join("va");
+    let st = bin().arg("--export-video-ai").arg(&json).arg(&out).args(["--aspect", "16:9"]).status().unwrap();
+    assert!(st.success());
+    for f in ["shot_01_start.png", "shot_01_end.png", "prompts.txt", "prompts.json", "prompts.md"] {
+        assert!(out.join(f).is_file(), "missing {f}");
+    }
+    let j: serde_json::Value = serde_json::from_slice(&std::fs::read(out.join("prompts.json")).unwrap()).unwrap();
+    assert_eq!(j["preset"], "Seedance 2.0");
+    assert_eq!(j["shots"][0]["aspect_ratio"], "16:9");
+    let generic = dir.join("gen");
+    let st = bin().arg("--export-video-ai").arg(&json).arg(&generic).args(["--preset", "generic"]).status().unwrap();
+    assert!(st.success());
+    assert!(std::fs::read_to_string(generic.join("prompts.txt")).unwrap().contains("[Negative]"));
+    assert!(
+        !bin().arg("--export-video-ai").arg(&json).arg(&generic).args(["--aspect", "5:7"]).status().unwrap().success()
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}

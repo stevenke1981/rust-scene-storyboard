@@ -46,6 +46,8 @@ pub fn sample_project() -> Project {
             height: 1.76,
             body_type: BodyType::Masculine,
             head_size: 1.0,
+            appearance: "male student, 20, short black hair, grey hoodie, backpack".into(),
+            appearance_zh: "20 歲台灣男大學生，黑色短髮，灰色帽 T、牛仔褲、黑色後背包".into(),
         },
         CastMember {
             id: "char_2".into(),
@@ -55,6 +57,8 @@ pub fn sample_project() -> Project {
             height: 1.62,
             body_type: BodyType::Slim,
             head_size: 1.0,
+            appearance: "female barista, 22, ponytail, brown apron".into(),
+            appearance_zh: "22 歲台灣女店員，綁馬尾，白襯衫配咖啡色圍裙，笑容親切".into(),
         },
         CastMember {
             id: "char_3".into(),
@@ -64,6 +68,8 @@ pub fn sample_project() -> Project {
             height: 1.72,
             body_type: BodyType::Masculine,
             head_size: 1.05,
+            appearance: "café owner, 50s, grey hair, black shirt".into(),
+            appearance_zh: "50 多歲台灣咖啡店老闆，灰白短髮，捲起袖子的黑襯衫，神情沉穩".into(),
         },
     ];
 
