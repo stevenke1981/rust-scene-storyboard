@@ -413,6 +413,29 @@ impl App {
         }
         let ctx = ui.ctx().clone();
         self.pick_keys = paint_items(&cp, &ctx, &mut self.figs, &items, view, ch, 2.0);
+        if self.depth_view {
+            let key = format!(
+                "{}x{}|{}|{}",
+                self.project.canvas.width,
+                self.project.canvas.height,
+                self.depth_end,
+                serde_json::to_string(self.cur()).unwrap_or_default()
+            );
+            if self.depth_cache.as_ref().is_none_or(|(k, _)| *k != key) {
+                let dm = rss::depth::render_depth(&self.project, self.cur(), self.depth_end);
+                let img = egui::ColorImage::from_gray([dm.w as usize, dm.h as usize], &dm.gray8());
+                let tex = ctx.load_texture("depth-preview", img, egui::TextureOptions::LINEAR);
+                self.depth_cache = Some((key, tex));
+            }
+            if let Some((_, tex)) = &self.depth_cache {
+                cp.image(
+                    tex.id(),
+                    crect,
+                    egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+                    Color32::WHITE,
+                );
+            }
+        }
 
         self.overlays(&painter, view, &hovered);
 

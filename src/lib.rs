@@ -11,6 +11,7 @@
 
 pub mod bubble;
 pub mod cli;
+pub mod depth;
 pub mod describe;
 pub mod draw;
 pub mod export;

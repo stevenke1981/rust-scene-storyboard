@@ -50,6 +50,9 @@ pub struct ShotPrompt {
     pub first_frame: String,
     /// Last frame file (`None` when nobody moves in the shot).
     pub last_frame: Option<String>,
+    /// Depth maps of the first / last frame (near = white), when enabled.
+    pub first_depth: Option<String>,
+    pub last_depth: Option<String>,
     /// Requested clip length in seconds (Seedance: clamped integer 4–15).
     pub duration: f32,
     /// The shot length from the storyboard.
@@ -272,6 +275,10 @@ pub fn render_clean(p: &Project, index: usize, end: bool) -> Result<Pixmap, Stri
     }
     let r = IntRect::from_xywh(x as i32, y as i32, w, h).ok_or("裁切範圍錯誤")?;
     pm.clone_rect(r).ok_or_else(|| "裁切失敗".into())
+}
+
+pub fn depth_name(i: usize, end: bool) -> String {
+    format!("shot_{:02}_{}_depth.png", i + 1, if end { "end" } else { "start" })
 }
 
 pub fn frame_name(i: usize, end: bool) -> String {
@@ -507,6 +514,8 @@ pub fn shot_prompt(p: &Project, i: usize) -> ShotPrompt {
         name: shot.name.clone(),
         first_frame: frame_name(i, false),
         last_frame: moves.then(|| frame_name(i, true)),
+        first_depth: v.depth.then(|| depth_name(i, false)),
+        last_depth: (v.depth && moves).then(|| depth_name(i, true)),
         duration,
         storyboard_duration: shot.duration,
         aspect_ratio: aspect_label(p),
@@ -576,6 +585,9 @@ pub fn prompts_md(f: &PromptFile) -> String {
     } else {
         o.push_str("- 使用方式：以 `shot_XX_start.png` 為起始畫面（支援的話以 `shot_XX_end.png` 為結束畫面），貼上提示詞與 Negative prompt。\n");
     }
+    if f.shots.iter().any(|s| s.first_depth.is_some()) {
+        o.push_str(DEPTH_HELP);
+    }
     for s in &f.shots {
         o.push_str(&format!("\n## 鏡頭 {:02}：{}\n\n", s.shot, s.name));
         o.push_str(&format!(
@@ -583,6 +595,12 @@ pub fn prompts_md(f: &PromptFile) -> String {
             s.first_frame,
             s.last_frame.as_ref().map(|l| format!("![]({l})")).unwrap_or_else(|| "（無移動，不需要尾幀）".into())
         ));
+        if let Some(d) = &s.first_depth {
+            o.push_str(&format!(
+                "| 首幀深度圖 | 尾幀深度圖 |\n|---|---|\n| ![]({d}) | {} |\n\n",
+                s.last_depth.as_ref().map(|l| format!("![]({l})")).unwrap_or_else(|| "—".into())
+            ));
+        }
         o.push_str(&format!(
             "- 時長 duration：**{} 秒**（分鏡 {:.1} 秒）\n- 比例 ratio：`{}`\n- 音訊 generate_audio：{}\n\n",
             if seed { format!("{:.0}", s.duration) } else { format!("{:.1}", s.duration) },
@@ -601,6 +619,11 @@ pub fn prompts_md(f: &PromptFile) -> String {
     o
 }
 
+const DEPTH_HELP: &str = "\n### 深度圖 Depth maps（`shot_XX_start_depth.png` / `shot_XX_end_depth.png`）\n\n\
+- 灰階、**近 = 白、遠 = 黑**（MiDaS / ControlNet depth 慣例的相對深度），尺寸與首尾幀相同、逐像素對齊；由場景幾何（地面、道具、人偶實心體積）算出，不是從圖片估計。\n\
+- **ControlNet depth**（ComfyUI、Stable Diffusion WebUI / Forge、SDXL / Flux depth ControlNet、AnimateDiff / Wan 等影片管線）：把深度圖接到 depth ControlNet，preprocessor 選 **none**（已經是深度圖，不要再跑 MiDaS / Depth Anything），control weight 約 0.4–0.7；首幀深度圖控制首幀構圖，尾幀深度圖用於結束畫面或關鍵幀。\n\
+- **Seedance 2.0**：首尾幀模式只接受首幀＋尾幀，**不能同時加參考圖**；要用深度圖時改用「全能參考 / 多模態參考」（最多 9 張圖），例如：`@Image1 為首幀構圖參考，@Image2 為深度與空間配置參考，保持人物位置與前後景深，生成寫實畫面`。Seedance 沒有官方的 depth 控制，深度圖只會被當作一般參考圖理解，效果不保證；較穩定的作法是先用 ControlNet depth 把首尾幀生成寫實圖，再把寫實首尾幀交給 Seedance 2.0 首尾幀模式。\n";
+
 /// Write clean frames and prompts into `dir`.
 pub fn export_video_ai(p: &Project, dir: &Path) -> Result<ExportReport, String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("無法建立資料夾 {}：{e}", dir.display()))?;
@@ -611,13 +634,32 @@ pub fn export_video_ai(p: &Project, dir: &Path) -> Result<ExportReport, String> 
             [(i, false)].into_iter().chain(mv.then_some((i, true)))
         })
         .collect();
-    let pngs: Vec<Result<Vec<u8>, String>> = std::thread::scope(|sc| {
-        let hs: Vec<_> =
-            jobs.iter().map(|&(i, end)| sc.spawn(move || raster::encode_png(&render_clean(p, i, end)?))).collect();
+    let depth = p.video_ai.depth;
+    let crop = crop_rect(p);
+    #[allow(clippy::type_complexity)]
+    let pngs: Vec<Result<(Vec<u8>, Option<Vec<u8>>), String>> = std::thread::scope(|sc| {
+        let hs: Vec<_> = jobs
+            .iter()
+            .map(|&(i, end)| {
+                sc.spawn(move || {
+                    let png = raster::encode_png(&render_clean(p, i, end)?)?;
+                    let d = if depth {
+                        Some(crate::depth::render_depth(p, &p.shots[i], end).crop(crop).to_png(p.video_ai.depth16)?)
+                    } else {
+                        None
+                    };
+                    Ok((png, d))
+                })
+            })
+            .collect();
         hs.into_iter().map(|h| h.join().unwrap_or_else(|_| Err("算圖執行緒失敗".into()))).collect()
     });
     for (&(i, end), png) in jobs.iter().zip(pngs) {
-        write(dir, &frame_name(i, end), &png?, &mut files)?;
+        let (png, d) = png?;
+        write(dir, &frame_name(i, end), &png, &mut files)?;
+        if let Some(d) = d {
+            write(dir, &depth_name(i, end), &d, &mut files)?;
+        }
     }
     let f = prompts(p);
     write(dir, "prompts.txt", prompts_txt(&f).as_bytes(), &mut files)?;

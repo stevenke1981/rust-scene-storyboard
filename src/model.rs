@@ -389,6 +389,10 @@ pub struct VideoAiSettings {
     pub keep_floor: bool,
     /// Ask for synchronised audio / spoken dialogue (Seedance `generate_audio`).
     pub audio: bool,
+    /// Also write `shot_XX_start_depth.png` / `shot_XX_end_depth.png`.
+    pub depth: bool,
+    /// Write depth maps as 16-bit grayscale PNGs.
+    pub depth16: bool,
 }
 
 impl Default for VideoAiSettings {
@@ -399,6 +403,8 @@ impl Default for VideoAiSettings {
             style: "cinematic realistic, natural lighting".into(),
             keep_floor: false,
             audio: true,
+            depth: true,
+            depth16: false,
         }
     }
 }

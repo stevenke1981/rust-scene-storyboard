@@ -18,6 +18,7 @@ rust-scene-storyboard — 影片分鏡：角色線稿姿勢 × 道具 × 場景 
         --name <name>      子資料夾名稱前綴（預設為專案檔名）
         --no-labels / --no-motion / --no-dialogue / --no-header / --no-ghosts / --no-prop-labels
         --link-images      HTML 以檔名連結圖片（預設以 base64 內嵌）
+        --depth / --depth16  每張草稿另存 shot_XX_<id>_depth.png 深度圖（近白遠黑；16 位元）
   rust-scene-storyboard --export-video-ai <project.json> <out_dir> [選項]
         影片 AI 用：每鏡 shot_XX_start.png / shot_XX_end.png（乾淨畫面）＋ prompts.txt/json/md
         --preset seedance|generic   目標模型（預設 seedance = Seedance 2.0 首尾幀）
@@ -25,6 +26,8 @@ rust-scene-storyboard — 影片分鏡：角色線稿姿勢 × 道具 × 場景 
         --style <text>              風格描述（預設 cinematic realistic, natural lighting）
         --keep-floor / --no-floor   保留淡淡的地平線
         --no-audio                  generate_audio = false
+        --depth / --no-depth        首尾幀深度圖 shot_XX_start_depth.png / _end_depth.png（預設開）
+        --depth16                   深度圖輸出 16 位元灰階 PNG
   rust-scene-storyboard --render <project.json> <N> <out.png>   只輸出第 N 個鏡頭
   rust-scene-storyboard --sample <out.json>            寫出範例專案
   rust-scene-storyboard --poses                        列出姿勢庫
@@ -128,6 +131,11 @@ pub fn run(args: &[String]) -> Option<i32> {
                     "--no-ghosts" => opts.ghosts = false,
                     "--no-prop-labels" => opts.prop_labels = false,
                     "--link-images" => opts.embed_images = false,
+                    "--depth" => opts.depth = true,
+                    "--depth16" => {
+                        opts.depth = true;
+                        opts.depth16 = true;
+                    }
                     s if s.starts_with("--") => return fail(format!("未知的選項 {s}")),
                     s => base = PathBuf::from(s),
                 }
@@ -183,6 +191,12 @@ pub fn run(args: &[String]) -> Option<i32> {
                     "--keep-floor" => p.video_ai.keep_floor = true,
                     "--no-floor" => p.video_ai.keep_floor = false,
                     "--no-audio" => p.video_ai.audio = false,
+                    "--depth" => p.video_ai.depth = true,
+                    "--no-depth" => p.video_ai.depth = false,
+                    "--depth16" => {
+                        p.video_ai.depth = true;
+                        p.video_ai.depth16 = true;
+                    }
                     s => return fail(format!("未知的選項 {s}")),
                 }
                 i += 1;

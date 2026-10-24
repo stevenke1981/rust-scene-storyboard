@@ -186,7 +186,7 @@ pub fn text_box(pos: [f32; 2], s: &str, size: f32, anchor: [f32; 2], badge: bool
     [pos[0] - anchor[0] * w, pos[1] - anchor[1] * h, w, h]
 }
 
-fn path_of(pts: &[[f32; 2]], closed: bool) -> Option<tiny_skia::Path> {
+pub(crate) fn path_of(pts: &[[f32; 2]], closed: bool) -> Option<tiny_skia::Path> {
     let mut pb = PathBuilder::new();
     for (i, q) in pts.iter().enumerate() {
         if i == 0 { pb.move_to(q[0], q[1]) } else { pb.line_to(q[0], q[1]) }

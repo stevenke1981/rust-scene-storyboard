@@ -56,6 +56,12 @@
   - `prompts.txt` / `prompts.json` / `prompts.md`：每個鏡頭一段英文提示詞（約 60–120 字）＋繁體中文版，包含人物與外觀、動作與螢幕方向（往畫面左右、靠近／遠離鏡頭）、位置、場景／時段／天氣、鏡頭景別／角度／單一運鏡、時長、以雙引號標示的對白，以及「線稿人偶只是走位參考，請生成真實人物」的風格句與一致性條件；JSON 另含 duration、ratio、generate_audio、首尾幀檔名與 negative prompt。
   - 專案設定（匯出對話框）：目標模型 **Seedance 2.0**（預設）或「通用影片 AI」、畫面比例（adaptive / 16:9 / 9:16 / 4:3 / 3:4 / 1:1 / 21:9，固定比例會從畫布中央裁切）、風格（預設 `cinematic realistic, natural lighting`）、保留地平線、生成音訊。角色面板可填「影片 AI 外觀」（英文／中文），鏡頭面板可填「影片 AI 補充」。
   - Seedance 2.0 規則：提示詞以 `@Image1 as the first frame, @Image2 as the last frame; generate the motion between them.`（中文 `@图片1 作為首幀，@图片2 作為尾幀…`）開頭，依「主體 → 動作 → 環境 → 鏡頭（一種運鏡）→ 風格 → 正向條件」排列；時長取整數並限制在 4–15 秒；ratio 使用 Seedance 支援的值（adaptive 依首幀比例）。通用 preset 則保留原本的鏡頭長度、以檔名指稱首尾幀並附上 Negative prompt。
+- **深度圖 Depth map**（v0.4）
+  - 灰階、**近 = 白、遠 = 黑**（MiDaS / ControlNet depth 慣例的相對深度），直接由場景幾何算出：地面是從地平線（黑）到畫面下緣的漸層、內景保留深灰的後牆；道具（牆面、建築、家具、樹…）以實心剪影放在它地面線的深度；人偶用 3D 網格做 z-buffer，四肢與軀幹是有厚度的實心體積，帶有圓潤的明暗。
+  - 影片 AI 用：`video_ai/shot_XX_start_depth.png`、`shot_XX_end_depth.png`（與首尾幀同尺寸、同裁切，預設開啟），`prompts.json` 有 `first_depth` / `last_depth`，`prompts.md` 說明如何搭配 ControlNet depth 與 Seedance 2.0。
+  - 一般草稿：勾選「草稿深度圖」或 CLI `--depth`，每張 `shot_XX_<id>.png` 旁另存 `shot_XX_<id>_depth.png`（起點位置）。
+  - 可選 16 位元灰階 PNG（`--depth16`）。
+  - GUI 工具列「深度圖」切換畫布預覽（「終點」顯示走位終點）。
 - **專案存檔**：JSON（`format: "rust-scene-storyboard/project"`），可開啟、儲存、另存；復原／重做。
 - **繁體中文介面**：內嵌 Noto Sans CJK TC 子集字型（SIL OFL 1.1），並自動載入系統 CJK 字型當備援（可用 `RSS_FALLBACK_FONT` 指定）。
 - **無頭 CLI**：不需要螢幕就能輸出 PNG / MD / HTML（CI、腳本、AI Agent 皆可用）。
@@ -77,6 +83,7 @@
 | 鏡頭 1 首幀 `shot_01_start.png` | 鏡頭 1 尾幀 `shot_01_end.png` |
 |---|---|
 | ![](docs/sample/video_ai/shot_01_start.png) | ![](docs/sample/video_ai/shot_01_end.png) |
+| ![](docs/sample/video_ai/shot_01_start_depth.png) | ![](docs/sample/video_ai/shot_01_end_depth.png) |
 
 ## 建置與執行
 
@@ -125,6 +132,8 @@ $B --export sample.json out --formats png,md    # 只輸出部分格式（png,ov
 $B --export sample.json out --no-dialogue --no-ghosts --link-images
 $B --export sample.json out --formats all,video_ai   # 一般匯出＋video_ai/ 資料夾
 $B --export-video-ai sample.json docs/sample/video_ai                    # Seedance 2.0 首尾幀＋提示詞
+$B --export sample.json out --formats png --depth            # 草稿＋深度圖（--depth16 為 16 位元）
+$B --export-video-ai sample.json va --no-depth               # 不輸出深度圖
 $B --export-video-ai sample.json va --preset generic --aspect 9:16 --keep-floor --style "anime, soft light"
 $B --render sample.json 2 shot2.png             # 只輸出第 2 個鏡頭
 $B --poses                                      # 列出姿勢庫
@@ -183,6 +192,7 @@ src/
   describe.rs  自動敘述與 storyboard.md
   html.rs      storyboard.html
   export.rs    匯出（PNG / 總覽 / MD / HTML / JSON）
+  depth.rs     深度圖（地面漸層、道具剪影、人偶 z-buffer 體積）
   video_ai.rs  影片 AI 用匯出：乾淨首尾幀、Seedance 2.0 / 通用提示詞
   cli.rs       無頭命令列
   sample.rs    範例專案
@@ -201,6 +211,8 @@ src/
 - Markdown / HTML 敘述是依資料自動產生的繁體中文文字，可在「旁白」「動作描述」「移動描述」欄位補充或改寫。
 - 影片 AI 提示詞：英文版使用英文的景別、角度、運鏡、姿勢與方向；使用者以中文輸入的「動作描述」「移動描述」「表情」「天氣」「環境」只寫進中文版（英文版改用姿勢的英文名稱），角色名、地點與對白則原樣保留中文。需要完整英文時請填「影片 AI 外觀」與「影片 AI 補充」。
 - 首尾幀仍是線稿人偶，只提供構圖與走位；人物長相要靠提示詞與外觀描述，Seedance 不保證每個鏡頭的人物一致。尾幀只代表走位終點，中間的路徑（彎曲路線）只寫在提示詞裡。
+- 深度圖是「示意」而非量測：道具是正對鏡頭的平面卡片（桌面、地毯等水平面沒有前後漸層），建築與牆只有剪影；焦距假設為畫布高度、地面以水平攝影機近似，俯／仰角時地面漸層仍以地平線推算；人偶的圓潤度略為誇大（1.5 倍）方便辨識；頭髮、衣服、手上的物品沒有體積。數值是每張圖各自的相對深度，不同鏡頭之間不可直接比較。
+- Seedance 2.0 沒有官方的深度控制，首尾幀模式也不能再加參考圖；深度圖主要給 ControlNet depth 類工具使用（見 `prompts.md`）。
 - Seedance 時長限制 4–15 秒：短於 4 秒的鏡頭會被延長成 4 秒（`storyboard_duration` 保留原值，可在剪輯時裁切）。
 - 內嵌字型是 Noto Sans CJK TC 子集（Big5 + GB2312 常用字，`tools/subset_font.py` 可重建）；罕用字會使用系統字型備援。
 

@@ -121,6 +121,11 @@ pub struct App {
     pub pick_keys: Vec<(String, String)>,
     pub action_thumbs: Vec<Thumb>,
     pub floor_thumbs: Vec<Thumb>,
+    /// Show the depth map instead of the line art on the canvas.
+    pub depth_view: bool,
+    /// Show the end-of-movement positions in the depth preview.
+    pub depth_end: bool,
+    pub depth_cache: Option<(String, egui::TextureHandle)>,
 }
 
 fn setup_fonts(ctx: &egui::Context) {
@@ -210,6 +215,9 @@ impl App {
             show_help: false,
             show_about: false,
             show_text: false,
+            depth_view: false,
+            depth_end: false,
+            depth_cache: None,
             confirm_discard: None,
             cast_edit: None,
             figs: paint::FigCache::default(),
@@ -653,6 +661,10 @@ impl App {
                         ui.checkbox(&mut v.keep_floor, "保留淡淡的地平線");
                         ui.checkbox(&mut v.audio, "生成音訊（對白）");
                     });
+                    ui.horizontal(|ui| {
+                        ui.checkbox(&mut v.depth, "首尾幀深度圖（*_depth.png）");
+                        ui.add_enabled(v.depth, egui::Checkbox::new(&mut v.depth16, "16 位元"));
+                    });
                     ui.label(
                         RichText::new("每鏡輸出乾淨的首幀 / 尾幀 PNG（無標籤、箭頭、泡泡）＋ prompts.txt / json / md")
                             .small()
@@ -670,6 +682,13 @@ impl App {
                     ui.checkbox(&mut self.export_opts.header, "鏡頭資訊列");
                 });
                 ui.checkbox(&mut self.export_opts.embed_images, "HTML 內嵌圖片（單一檔案，可直接分享）");
+                ui.horizontal(|ui| {
+                    ui.checkbox(&mut self.export_opts.depth, "草稿深度圖（shot_XX_*_depth.png，近白遠黑）");
+                    ui.add_enabled(
+                        self.export_opts.depth,
+                        egui::Checkbox::new(&mut self.export_opts.depth16, "16 位元"),
+                    );
+                });
                 ui.add_space(4.0);
                 ui.label(RichText::new("輸出位置").strong().color(ACCENT));
                 ui.horizontal(|ui| {
@@ -966,6 +985,11 @@ impl App {
             ui.toggle_value(&mut self.export_opts.motion, "走位");
             ui.toggle_value(&mut self.export_opts.labels, "名牌");
             ui.toggle_value(&mut self.export_opts.dialogue, "對白");
+            ui.toggle_value(&mut self.depth_view, "深度圖")
+                .on_hover_text("在畫布上預覽深度圖（近 = 白、遠 = 黑，與匯出的 *_depth.png 相同）");
+            if self.depth_view {
+                ui.toggle_value(&mut self.depth_end, "終點").on_hover_text("深度圖顯示走位終點的位置與姿勢");
+            }
             ui.separator();
             ui.label("縮放");
             ui.add(egui::Slider::new(&mut self.zoom, 0.25..=4.0).show_value(false).logarithmic(true));

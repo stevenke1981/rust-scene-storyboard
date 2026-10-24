@@ -5,11 +5,21 @@
 - 風格 Style：cinematic realistic, natural lighting
 - 使用方式：在 Seedance 2.0 選「首尾幀」，上傳 `shot_XX_start.png` 為首幀（@Image1 / @图片1）、`shot_XX_end.png` 為尾幀（@Image2 / @图片2），時長與比例依下表設定，貼上英文或中文提示詞。沒有尾幀的鏡頭只上傳首幀。
 
+### 深度圖 Depth maps（`shot_XX_start_depth.png` / `shot_XX_end_depth.png`）
+
+- 灰階、**近 = 白、遠 = 黑**（MiDaS / ControlNet depth 慣例的相對深度），尺寸與首尾幀相同、逐像素對齊；由場景幾何（地面、道具、人偶實心體積）算出，不是從圖片估計。
+- **ControlNet depth**（ComfyUI、Stable Diffusion WebUI / Forge、SDXL / Flux depth ControlNet、AnimateDiff / Wan 等影片管線）：把深度圖接到 depth ControlNet，preprocessor 選 **none**（已經是深度圖，不要再跑 MiDaS / Depth Anything），control weight 約 0.4–0.7；首幀深度圖控制首幀構圖，尾幀深度圖用於結束畫面或關鍵幀。
+- **Seedance 2.0**：首尾幀模式只接受首幀＋尾幀，**不能同時加參考圖**；要用深度圖時改用「全能參考 / 多模態參考」（最多 9 張圖），例如：`@Image1 為首幀構圖參考，@Image2 為深度與空間配置參考，保持人物位置與前後景深，生成寫實畫面`。Seedance 沒有官方的 depth 控制，深度圖只會被當作一般參考圖理解，效果不保證；較穩定的作法是先用 ControlNet depth 把首尾幀生成寫實圖，再把寫實首尾幀交給 Seedance 2.0 首尾幀模式。
+
 ## 鏡頭 01：咖啡店門口
 
 | 首幀 | 尾幀 |
 |---|---|
 | ![](shot_01_start.png) | ![](shot_01_end.png) |
+
+| 首幀深度圖 | 尾幀深度圖 |
+|---|---|
+| ![](shot_01_start_depth.png) | ![](shot_01_end_depth.png) |
 
 - 時長 duration：**4 秒**（分鏡 4.0 秒）
 - 比例 ratio：`adaptive`
@@ -33,6 +43,10 @@
 |---|---|
 | ![](shot_02_start.png) | ![](shot_02_end.png) |
 
+| 首幀深度圖 | 尾幀深度圖 |
+|---|---|
+| ![](shot_02_start_depth.png) | ![](shot_02_end_depth.png) |
+
 - 時長 duration：**5 秒**（分鏡 5.0 秒）
 - 比例 ratio：`adaptive`
 - 音訊 generate_audio：true
@@ -54,6 +68,10 @@
 | 首幀 | 尾幀 |
 |---|---|
 | ![](shot_03_start.png) | ![](shot_03_end.png) |
+
+| 首幀深度圖 | 尾幀深度圖 |
+|---|---|
+| ![](shot_03_start_depth.png) | ![](shot_03_end_depth.png) |
 
 - 時長 duration：**6 秒**（分鏡 6.0 秒）
 - 比例 ratio：`adaptive`

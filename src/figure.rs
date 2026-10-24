@@ -7,6 +7,7 @@
 //! at a scale of `ppm` canvas pixels per metre.
 
 use crate::mannequin::body::{Body, handle_point, snap_to_floor};
+use crate::mannequin::lineart::Scene;
 use crate::mannequin::math::{Vec3, v3};
 use crate::mannequin::render::{Camera, DrawList, Frame2, Rgba, Style, View, draw_body_frame};
 use crate::mannequin::skeleton::{JOINT_COUNT, Joint, Pose, Proportions, Skeleton, forward};
@@ -34,6 +35,19 @@ pub struct FigureSpec {
     /// Cast colour (ghost lines / highlights).
     pub color: Rgba,
     pub highlight: Option<Joint>,
+}
+
+/// Body depth over a canvas pixel rectangle, supersampled `ss`×`ss` per pixel.
+#[derive(Clone, Debug)]
+pub struct DepthPatch {
+    pub x0: i64,
+    pub y0: i64,
+    pub w: usize,
+    pub h: usize,
+    pub ss: usize,
+    /// View depth relative to the ground point in metres (negative = nearer);
+    /// `INFINITY` where the body does not cover the sample.
+    pub dz: Vec<f32>,
 }
 
 /// A built figure: the line-art drawing list and its view -> canvas frame.
@@ -169,6 +183,33 @@ impl FigureSpec {
             }
         }
         FigureDraw { list, frame }
+    }
+
+    /// Solid body depth (from the mannequin's triangle meshes) over its canvas bounds.
+    pub fn depth_patch(&self, canvas_w: u32, canvas_h: u32, ss: usize) -> Option<DepthPatch> {
+        let skel = self.skeleton();
+        let pose = self.pose(&skel);
+        let body = Body::new(&skel, &pose);
+        let view = self.view();
+        let frame = self.frame(&view);
+        let scene = Scene::new(&body, &view);
+        let p0 = frame.to_px([scene.min[0], scene.max[1]]);
+        let p1 = frame.to_px([scene.max[0], scene.min[1]]);
+        let x0 = (p0[0].min(p1[0]).floor() as i64 - 2).max(0);
+        let y0 = (p0[1].min(p1[1]).floor() as i64 - 2).max(0);
+        let x1 = (p0[0].max(p1[0]).ceil() as i64 + 2).min(canvas_w as i64);
+        let y1 = (p0[1].max(p1[1]).ceil() as i64 + 2).min(canvas_h as i64);
+        if x1 <= x0 || y1 <= y0 {
+            return None;
+        }
+        let (w, h) = ((x1 - x0) as usize, (y1 - y0) as usize);
+        let a = frame.from_px([x0 as f32, y1 as f32]);
+        let b = frame.from_px([x1 as f32, y0 as f32]);
+        let ss = ss.clamp(1, 4);
+        let buf = scene.buffers(a, b, w * ss, h * ss);
+        let g = view.project(Vec3::ZERO).depth;
+        let dz = buf.depth.iter().map(|&d| if d.is_finite() { d - g } else { f32::INFINITY }).collect();
+        Some(DepthPatch { x0, y0, w, h, ss, dz })
     }
 
     /// Joint handle positions in canvas px with their view depth (for GUI editing).

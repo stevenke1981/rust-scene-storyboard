@@ -59,12 +59,28 @@ fn export_video_ai() {
     let out = dir.join("va");
     let st = bin().arg("--export-video-ai").arg(&json).arg(&out).args(["--aspect", "16:9"]).status().unwrap();
     assert!(st.success());
-    for f in ["shot_01_start.png", "shot_01_end.png", "prompts.txt", "prompts.json", "prompts.md"] {
+    for f in [
+        "shot_01_start.png",
+        "shot_01_end.png",
+        "shot_01_start_depth.png",
+        "shot_01_end_depth.png",
+        "prompts.txt",
+        "prompts.json",
+        "prompts.md",
+    ] {
         assert!(out.join(f).is_file(), "missing {f}");
     }
     let j: serde_json::Value = serde_json::from_slice(&std::fs::read(out.join("prompts.json")).unwrap()).unwrap();
     assert_eq!(j["preset"], "Seedance 2.0");
     assert_eq!(j["shots"][0]["aspect_ratio"], "16:9");
+    assert_eq!(j["shots"][0]["first_depth"], "shot_01_start_depth.png");
+    let d = std::fs::read(out.join("shot_01_start_depth.png")).unwrap();
+    assert_eq!(&d[1..4], b"PNG");
+    let drafts = dir.join("drafts");
+    let st =
+        bin().arg("--export").arg(&json).arg(&drafts).args(["--no-subdir", "--formats", "png", "--depth16"]).status();
+    assert!(st.unwrap().success());
+    assert!(drafts.join("shot_01_shot_1_depth.png").is_file());
     let generic = dir.join("gen");
     let st = bin().arg("--export-video-ai").arg(&json).arg(&generic).args(["--preset", "generic"]).status().unwrap();
     assert!(st.success());

@@ -98,6 +98,10 @@ pub struct ExportOptions {
     pub prop_labels: bool,
     /// Embed the PNGs in storyboard.html (otherwise link to the files).
     pub embed_images: bool,
+    /// Also write a depth map `shot_XX_<id>_depth.png` next to every draft PNG.
+    pub depth: bool,
+    /// 16-bit grayscale depth PNGs.
+    pub depth16: bool,
 }
 
 impl Default for ExportOptions {
@@ -109,6 +113,8 @@ impl Default for ExportOptions {
             dialogue: true,
             header: true,
             ghosts: true,
+            depth: false,
+            depth16: false,
             prop_labels: true,
             embed_images: true,
         }
@@ -281,6 +287,18 @@ pub fn export_all(p: &Project, dir: &Path, opts: &ExportOptions) -> Result<Expor
     if f.png {
         for (i, png) in pngs.iter().enumerate() {
             write(dir, &shot_png_name(i, &p.shots[i].id), png, &mut files)?;
+        }
+        if opts.depth {
+            let maps: Vec<Result<Vec<u8>, String>> = std::thread::scope(|sc| {
+                let hs: Vec<_> = (0..p.shots.len())
+                    .map(|i| sc.spawn(move || crate::depth::render_depth(p, &p.shots[i], false).to_png(opts.depth16)))
+                    .collect();
+                hs.into_iter().map(|h| h.join().unwrap_or_else(|_| Err("算圖執行緒失敗".into()))).collect()
+            });
+            for (i, m) in maps.into_iter().enumerate() {
+                let name = shot_png_name(i, &p.shots[i].id).replace(".png", "_depth.png");
+                write(dir, &name, &m?, &mut files)?;
+            }
         }
     }
     if f.overview {

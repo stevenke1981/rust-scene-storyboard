@@ -1279,6 +1279,8 @@
     "aspect": "adaptive",
     "style": "cinematic realistic, natural lighting",
     "keep_floor": false,
-    "audio": true
+    "audio": true,
+    "depth": true,
+    "depth16": false
   }
 }
